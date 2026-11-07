@@ -17,10 +17,23 @@ Everything lives in one file: **`index.html`** — no build step, no dependencie
 - **Notification shade + Quick Panel** — swipe down from the status bar; Wi-Fi/Bluetooth/Sound toggles, standalone **Dark mode** button (new in One UI 9), brightness slider, media player with waveform animation, live notifications
 - **Recents** — swipe up and hold on the gesture bar; card carousel with close-all
 - **Power menu & AOD** — side power key (screen off → always-on display), volume rocker with edge HUD
-- Dark mode, 4 switchable wallpapers, ripples, spring animations, haptics and UI sounds throughout
+- Dark mode, 4 switchable wallpapers, 6 accent color palettes, ripples, spring animations, haptics and UI sounds throughout
+- **Polish** — boot progress bar, home-screen unlock stagger, wallpaper parallax on page swipe, swipe-to-dismiss notifications
 
-### Apps (15)
-Phone (with call screen), Messages (with replies), Contacts, Internet browser, Camera (capture to Gallery), Gallery (with viewer), Clock (alarms, world clock, stopwatch, timer), Calendar, Calculator, Notes, Weather, My Files, Galaxy Store, Health, Settings (with working subpages — wallpaper picker, Wi-Fi, About phone).
+### Apps (16)
+Phone (with call screen), Messages (with replies), Contacts, Internet browser, Camera (capture to Gallery), Gallery (with viewer), Clock (alarms, world clock, stopwatch, timer), Calendar, Calculator, Notes, Weather, My Files, Galaxy Store, Health, Settings, and the **Play Store**.
+
+### Play Store (100+ apps)
+A full Play Store experience with a 111-app catalog across 8 categories (Games, Social, Productivity, Entertainment, Lifestyle, Tools, Health & Fitness, Education):
+- **For you** — editor's-choice hero, horizontal recommendation rows, per-category shelves
+- **Top charts** — ranked top-25 list with ratings and downloads
+- **Categories** — colored category tiles with full app lists
+- **Search** — live filtering across the whole catalog
+- **App pages** — screenshots, stats (rating / downloads / size / age), description, reviews
+- **Install flow** — animated progress fill; installed apps get their own app screen, appear in the app drawer, and persist across reloads
+
+### Settings (expanded)
+Sounds and vibration (sound mode, volume slider, touch sounds), Notifications (Do not disturb, per-app toggles), Display (dark mode, brightness, Eye comfort shield, auto-rotate), Wallpaper and style (4 wallpapers + 6 accent color palettes), Lock screen and AOD (Default / Slim / Bold clock styles, AOD toggle), Security (full change-PIN flow with keypad), Battery (power saving, battery percentage), Digital Wellbeing (weekly screen-time chart, app timers), Software update (animated check), Wi-Fi, Accounts, and About phone — all as One UI-style subpages.
 
 ### Samsung DeX
 Toggle DeX from the Quick Panel, the power menu, or Settings → Advanced features:

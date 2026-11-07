@@ -531,6 +531,82 @@ img,svg{display:block;max-width:100%}
   opacity:0;pointer-events:none;transition:opacity .3s}
 #dex-exit-toast.on{opacity:1}
 
+/* ---- boot progress ---- */
+#boot .bar{position:absolute;bottom:72px;left:50%;transform:translateX(-50%);width:132px;height:3px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}
+#boot .bar i{display:block;height:100%;width:0;background:#fff;border-radius:2px;animation:bootbar 2.1s .3s ease-in-out forwards}
+@keyframes bootbar{0%{width:0}55%{width:62%}100%{width:100%}}
+
+/* ---- home stagger & lock entrance ---- */
+#home.unlocking .hpage > *{animation:homeItem .55s var(--ease-spring) backwards}
+#home.unlocking .hpage > *:nth-child(1){animation-delay:.05s}
+#home.unlocking .hpage > *:nth-child(2){animation-delay:.11s}
+#home.unlocking .hpage > *:nth-child(3){animation-delay:.17s}
+#home.unlocking #home-dots,#home.unlocking #home-search,#home.unlocking #dock-wrap{animation:homeItem .55s var(--ease-spring) backwards}
+#home.unlocking #home-dots{animation-delay:.2s}
+#home.unlocking #home-search{animation-delay:.25s}
+#home.unlocking #dock-wrap{animation-delay:.3s}
+@keyframes homeItem{from{transform:translateY(28px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+#lock.on .lk-clock{animation:lkIn .65s var(--ease-spring) backwards}
+#lock.on .lk-date{animation:lkIn .65s .09s var(--ease-spring) backwards}
+#lock.on .lk-wx{animation:lkIn .65s .14s var(--ease-spring) backwards}
+#lock.on .lk-notifs{animation:lkIn .65s .2s var(--ease-spring) backwards}
+@keyframes lkIn{from{transform:translateY(-20px);opacity:0}to{transform:none;opacity:1}}
+#wallpaper{transition:background .5s var(--ease-out),transform .45s var(--ease-out)}
+
+/* ---- lock clock styles ---- */
+#lock[data-clock=slim] .lk-clock{font-weight:200;font-size:92px;letter-spacing:-4px}
+#lock[data-clock=bold] .lk-clock{font-weight:700;letter-spacing:1px}
+#lock[data-clock=bold] .lk-clock b{font-weight:800}
+
+/* ---- Play Store ---- */
+.ps-hero{margin:6px 16px 16px;border-radius:30px;padding:26px 24px;color:#fff;position:relative;overflow:hidden}
+.ps-hero .ph-k{font-size:11px;font-weight:700;letter-spacing:1.5px;opacity:.8}
+.ps-hero .ph-t{font-size:23px;font-weight:800;margin-top:8px;line-height:1.2}
+.ps-hero .ph-s{font-size:13px;opacity:.85;margin-top:6px;line-height:1.5}
+.ps-row-title{display:flex;align-items:baseline;gap:8px;padding:6px 30px 12px}
+.ps-row-title b{font-size:16.5px;font-weight:700}
+.ps-row-title span{font-size:11.5px;color:var(--text2)}
+.ps-scroll{display:flex;gap:14px;overflow-x:auto;padding:2px 26px 18px;scrollbar-width:none}
+.ps-scroll::-webkit-scrollbar{display:none}
+.ps-card{flex:none;width:104px;display:flex;flex-direction:column;gap:8px}
+.ps-card .aicon{width:60px;height:60px}
+.ps-card .psn{font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-card .psr{font-size:10.5px;color:var(--text2)}
+.ps-list .oui-item .rank{width:30px;font-weight:800;color:var(--text2);font-size:15px}
+.ps-cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:4px 16px 20px}
+.ps-cat{border-radius:24px;padding:18px;color:#fff;font-weight:700;font-size:15px;position:relative;overflow:hidden;min-height:86px;display:flex;align-items:flex-end}
+.ps-cat svg{position:absolute;right:12px;top:12px;width:26px;height:26px;opacity:.85}
+.ps-meta{display:flex;gap:18px;padding:16px 30px 4px;color:var(--text2);font-size:11.5px}
+.ps-meta div{flex:1;text-align:center}
+.ps-meta b{display:block;color:var(--text);font-size:14px;font-weight:700;margin-bottom:3px}
+.ps-shots{display:flex;gap:10px;overflow-x:auto;padding:14px 26px 6px;scrollbar-width:none}
+.ps-shots::-webkit-scrollbar{display:none}
+.ps-shot{flex:none;width:150px;height:250px;border-radius:18px;position:relative;overflow:hidden}
+.ps-install{margin:14px 30px 0;height:48px;border-radius:26px;background:var(--blue);color:#fff;font-size:15px;font-weight:700;position:relative;overflow:hidden}
+.ps-install .fillp{position:absolute;inset:0;width:0;background:rgba(255,255,255,.22);transition:width .2s linear}
+.ps-install span{position:relative}
+.ps-install.done{background:var(--chip);color:var(--text)}
+.ps-detail{position:absolute;inset:0;background:var(--bg);z-index:3;display:flex;flex-direction:column;animation:suIn .32s var(--ease-spring)}
+.ps-head-card{display:flex;align-items:center;gap:16px;padding:8px 28px 16px}
+.ps-head-card .aicon{width:74px;height:74px;border-radius:26px}
+.ps-head-card .psd{color:var(--text2);font-size:12px;margin-top:3px}
+.ps-desc{padding:20px 30px;color:var(--text2);font-size:13.5px;line-height:1.7}
+.installed-badge{color:var(--blue);font-weight:700;font-size:13px}
+#statusbar .pct{font-size:10.5px;margin-right:2px}
+.dw-bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding:18px 30px 6px}
+.dw-bars .db{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+.dw-bars .db i{width:100%;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--blue),color-mix(in srgb,var(--blue) 55%,transparent));transform-origin:bottom;animation:dbGrow .8s var(--ease-spring) backwards}
+@keyframes dbGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.dw-bars .db span{font-size:10px;color:var(--text2)}
+.accent-chips{display:flex;gap:12px;padding:16px 30px 4px}
+.accent-chip{width:42px;height:42px;border-radius:50%;position:relative;flex:none;transition:transform .2s var(--ease-spring)}
+.accent-chip:active{transform:scale(.88)}
+.accent-chip.on::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2.5px solid var(--text)}
+.sh-notif{touch-action:pan-y}
+.sh-notif.swiping{transition:none;position:relative;z-index:2}
+.sh-notif.dismiss{animation:notifOut .3s ease-in forwards}
+@keyframes notifOut{to{transform:translateX(110%);opacity:0;height:0;margin:0;padding-top:0;padding-bottom:0}}
+
 @media (max-width:760px){
   #stage-hint{display:none}
   #stage{gap:0}
@@ -549,6 +625,7 @@ img,svg{display:block;max-width:100%}
   Swipe up on home for the app drawer<br>
   Swipe down for Quick Panel<br>
   Side keys: power &amp; volume<br>
+  Try the <b>Play Store</b> — 100+ apps<br>
   Toggle <b>Samsung DeX</b> in Quick Panel
 </div>
 <div id="stage">
@@ -590,7 +667,7 @@ img,svg{display:block;max-width:100%}
         </div>
         <div id="lock"></div>
         <div id="aod"><div class="a-t">9:41</div><div class="a-d"></div></div>
-        <div id="boot"><div class="slogo">SAMSUNG</div><div class="sub">GALAXY ONE UI 9</div><div class="ver">One UI 9.0 · Android 17</div></div>
+        <div id="boot"><div class="slogo">SAMSUNG</div><div class="sub">GALAXY ONE UI 9</div><div class="bar"><i></i></div><div class="ver">One UI 9.0 · Android 17</div></div>
         <div id="setup"></div>
         <div id="volhud"></div>
         <div id="powermenu"></div>
@@ -644,6 +721,11 @@ const state = {
   navMode: store.get('navMode', 'gestures'), pin: store.get('pin', ''),
   wifi: store.get('wifi', true), bt: store.get('bt', false), sound: true, airplane: false,
   brightness: 0.85, volume: 0.6, dex: false,
+  accent: store.get('accent', 'blue'), eyeComfort: false, batteryPct: store.get('batteryPct', true),
+  clockStyle: store.get('clockStyle', 'default'), installed: store.get('installed', []),
+  touchSounds: store.get('touchSounds', true), soundMode: store.get('soundMode', 'sound'),
+  dnd: store.get('dnd', false), autoRotate: store.get('autoRotate', true), aod: store.get('aod', true),
+  powerSaving: false, notifPrefs: store.get('notifPrefs', {}),
   notifs: [], recentApps: [], photos: store.get('photos', []),
   notes: store.get('notes', [
     { t: 'Welcome to One UI 9', b: 'This note is synced with Samsung Cloud.\n\nTry:\n• Swipe up from the bottom to go home\n• Pull down the Quick Panel\n• Toggle Samsung DeX for a desktop experience', d: Date.now() - 86400000 }
@@ -656,8 +738,27 @@ const save = () => {
   store.set('setupDone', state.setupDone); store.set('theme', state.theme);
   store.set('wallpaper', state.wallpaper); store.set('navMode', state.navMode);
   store.set('pin', state.pin); store.set('wifi', state.wifi); store.set('bt', state.bt);
+  store.set('accent', state.accent); store.set('batteryPct', state.batteryPct);
+  store.set('clockStyle', state.clockStyle); store.set('installed', state.installed.slice(0, 60));
+  store.set('touchSounds', state.touchSounds); store.set('soundMode', state.soundMode);
+  store.set('dnd', state.dnd); store.set('autoRotate', state.autoRotate); store.set('aod', state.aod);
+  store.set('notifPrefs', state.notifPrefs);
   store.set('photos', state.photos.slice(0, 24)); store.set('notes', state.notes); store.set('alarms', state.alarms);
 };
+
+/* ---------- accent colors ---------- */
+const ACCENTS = {
+  blue: { c: '#1b6ef3', p: '#1257c9' }, violet: { c: '#7c5cff', p: '#6039e8' },
+  teal: { c: '#0aa6a8', p: '#07807f' }, green: { c: '#0e9f5a', p: '#0a7a42' },
+  amber: { c: '#e08700', p: '#b56c00' }, rose: { c: '#e0527d', p: '#b83a61' },
+};
+function applyAccent() {
+  const a = ACCENTS[state.accent] || ACCENTS.blue;
+  ['#phone', '#dex'].forEach(s => {
+    const e = $(s); if (!e) return;
+    e.style.setProperty('--blue', a.c); e.style.setProperty('--blue-press', a.p);
+  });
+}
 
 /* ---------- wallpapers ---------- */
 const WALLPAPERS = {
@@ -720,6 +821,10 @@ const I = {
   send: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 20.5 21 12 3.5 3.5 3.5 10l12 2-12 2z"/></svg>',
   heart: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21S3.5 15.6 3.5 9.8A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.5 3.4c0 5.8-8.5 11.2-8.5 11.2z"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 10l6 6 6-6"/></svg>',
+  palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.9 2-2s-.9-2-2-2h-1a2 2 0 0 1 0-4h5a4 4 0 0 0 4-4 6 6 0 0 0-6-4z"/><circle cx="7.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="10.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5 20 6v6c0 4.4-3.4 7.9-8 9.5-4.6-1.6-8-5.1-8-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10" stroke-linecap="round"/></svg>',
+  playstore: '<svg viewBox="0 0 24 24"><path fill="#2fc7f7" d="M4.2 2.7c-.4.4-.7.9-.7 1.5v15.6c0 .6.3 1.1.7 1.5l9.5-9.3-9.5-9.3z"/><path fill="#ffd12e" d="M17 9.8 5.3 3l8.4 8.4L17 9.8z"/><path fill="#ff4f6d" d="M5.3 21l11.7-6.8-3.3-1.8L5.3 21z"/><path fill="#4ade80" d="M17 14.2l2.8-1.6c1.1-.6 1.1-2 0-2.6L17 8.4l-3.3 3 3.3 2.8z"/></svg>',
 };
 
 /* ---------- app registry ---------- */
@@ -737,6 +842,7 @@ const APPS = [
   { id: 'weather',  name: 'Weather',     grad: 'linear-gradient(160deg,#4facfe,#1d6fe0)', icon: I.cloud,   light: false },
   { id: 'files',    name: 'My Files',    grad: 'linear-gradient(160deg,#ffffff,#e3e7ef)', icon: I.folder, light: true },
   { id: 'store',    name: 'Galaxy Store', grad: 'linear-gradient(160deg,#8b5cf6,#5b21b6)', icon: I.store, light: false },
+  { id: 'play',    name: 'Play Store',  grad: 'linear-gradient(160deg,#57b0f8,#1a73e8)', icon: I.playstore, light: false },
   { id: 'health',   name: 'Health',      grad: 'linear-gradient(160deg,#fb7185,#e11d48)', icon: I.health, light: false },
   { id: 'settings', name: 'Settings',    grad: 'linear-gradient(160deg,#9aa3b2,#5b6472)', icon: I.gear,    light: false },
 ];
@@ -753,6 +859,7 @@ let audioCtx = null;
 function tap() { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }
 function click() {
   tap();
+  if (state && state.touchSounds === false) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
@@ -822,6 +929,7 @@ function renderStatusIcons() {
     if (state.wifi) p.push(`<span style="color:var(--sb-ink)">${I.wifi.replace('<svg','<svg width="14" height="14"')}</span>`);
   }
   p.push(`<span style="color:var(--sb-ink)">${I.battery.replace('<svg','<svg width="17" height="17"')}</span>`);
+  if (state.batteryPct) p.push(`<span class="pct" style="color:var(--sb-ink)">96</span>`);
   $('#sb-icons').innerHTML = p.join('');
 }
 
@@ -829,6 +937,7 @@ function renderStatusIcons() {
 function applyTheme() {
   $('#phone').dataset.theme = state.theme;
   $('#dex').dataset.theme = state.theme;
+  applyAccent();
   renderStatusIcons();
   const dark = state.theme === 'dark';
   const navInk = dark ? '#f3f4f6' : '#0d0e10';
@@ -1119,6 +1228,7 @@ function finishSetup() {
 /* ---------- lock screen ---------- */
 function buildLock() {
   const lk = $('#lock');
+  lk.dataset.clock = state.clockStyle || 'default';
   lk.innerHTML = `
     <div class="lk-clock">9<b>:41</b></div>
     <div class="lk-date"><span></span></div>
@@ -1240,7 +1350,7 @@ function buildHome() {
   p1.appendChild(g1);
   // page 2 apps
   const g2 = el('div', 'agrid');
-  ['calculator', 'contacts', 'clock', 'store'].forEach(id => g2.appendChild(homeIcon(id)));
+  ['calculator', 'contacts', 'clock', 'store', 'play'].forEach(id => g2.appendChild(homeIcon(id)));
   p2.appendChild(g2);
   // dock
   const dock = $('#dock'); dock.innerHTML = '';
@@ -1270,8 +1380,10 @@ function setupHomeGestures() {
     if (x0 == null) return;
     const dx = e.clientX - x0; x0 = null;
     const off = pages.dataset.off === '1';
-    if (dx < -50 && !off) { pages.dataset.off = '1'; pages.style.transform = 'translateX(-100%)'; setPageDot(1); click(); }
-    else if (dx > 50 && off) { pages.dataset.off = '0'; pages.style.transform = 'translateX(0)'; setPageDot(0); click(); }
+    const wp = $('#wallpaper');
+    const move = off2 => { $('#hp1').style.transform = $('#hp2').style.transform = off2 ? 'translateX(-100%)' : 'translateX(0)'; };
+    if (dx < -50 && !off) { pages.dataset.off = '1'; move(true); wp.style.transform = 'translateX(-6%) scale(1.12)'; setPageDot(1); click(); }
+    else if (dx > 50 && off) { pages.dataset.off = '0'; move(false); wp.style.transform = ''; setPageDot(0); click(); }
   };
 }
 function setPageDot(i) { $$('#home-dots i').forEach((d, j) => d.classList.toggle('on', j === i)); }
@@ -1414,7 +1526,26 @@ function renderShade() {
     const d = el('div', 'sh-notif rp');
     d.innerHTML = `<div class="ni" style="background:${n.color}">${n.icon.replace('<svg', '<svg width="17" height="17" fill="#fff"')}</div>
       <div style="min-width:0;flex:1"><div class="nt">${n.title}</div><div class="nm">${n.body}</div></div><div class="nwhen">${n.when}</div>`;
-    d.onclick = () => { closeShade(); openApp(n.app); };
+    let sx = null, swiping = false;
+    d.onpointerdown = e => { sx = e.clientX; swiping = false; try { d.setPointerCapture(e.pointerId); } catch (err) {} };
+    d.onpointermove = e => {
+      if (sx == null) return;
+      const dx = e.clientX - sx;
+      if (Math.abs(dx) > 8) { swiping = true; d.classList.add('swiping'); d.style.transform = `translateX(${dx}px)`; d.style.opacity = String(Math.max(.25, 1 - Math.abs(dx) / 220)); }
+    };
+    const endSwipe = e => {
+      if (sx == null) return;
+      const dx = e.clientX - sx; sx = null;
+      d.classList.remove('swiping');
+      if (Math.abs(dx) > 90) {
+        d.classList.add('dismiss');
+        const idx = state.notifs.indexOf(n);
+        if (idx > -1) state.notifs.splice(idx, 1);
+        setTimeout(() => { renderShade(); renderLockNotifs(); }, 270);
+      } else { d.style.transform = ''; d.style.opacity = ''; }
+    };
+    d.onpointerup = endSwipe; d.onpointercancel = endSwipe;
+    d.onclick = () => { if (!swiping) { closeShade(); openApp(n.app); } };
     d.oncontextmenu = e => { e.preventDefault(); state.notifs.splice(i, 1); renderShade(); renderLockNotifs(); };
     b.appendChild(d);
   });
@@ -1441,7 +1572,8 @@ function qToggle(q) {
 function applyBrightness() {
   const w = $('#wallpaper');
   const f = .35 + state.brightness * .65;
-  $('#screen').style.filter = `brightness(${f.toFixed(2)})`;
+  const ec = state.eyeComfort ? ' sepia(.28) saturate(1.12)' : '';
+  $('#screen').style.filter = `brightness(${f.toFixed(2)})${ec}`;
   w.style.filter = 'none';
 }
 function openShade() { renderShade(); $('#shade').classList.add('on'); requestAnimationFrame(() => $('#shade').classList.add('open')); }
@@ -1626,7 +1758,20 @@ function sep() { return el('div', 'oui-sep'); }
 function chevEnd() { return I.chev; }
 
 /* ---- Settings ---- */
-APPS.push = APPS.push; // noop
+function mkSlider(icon, get, set) {
+  const sl = el('div', 'oslider rp');
+  sl.innerHTML = `<div class="fill"></div><span class="ico">${icon || ''}</span><div class="knob"></div>`;
+  const draw = () => {
+    const v = clamp(get(), 0, 1);
+    sl.querySelector('.fill').style.width = v * 100 + '%';
+    sl.querySelector('.knob').style.left = `calc(${v * 100}% )`;
+  };
+  const from = e => { const r = sl.getBoundingClientRect(); set(clamp((e.clientX - r.left) / r.width, 0, 1)); draw(); };
+  sl.onpointerdown = e => { sl.setPointerCapture(e.pointerId); from(e); sl.onpointermove = from; };
+  sl.onpointerup = sl.onpointerleave = () => { sl.onpointermove = null; };
+  draw();
+  return sl;
+}
 const settingsApp = appById('settings');
 settingsApp.build = (f) => {
   const search = el('div');
@@ -1647,26 +1792,44 @@ settingsApp.build = (f) => {
       sep(),
       item(I.bt, 'Bluetooth', state.bt ? 'On' : 'Off', chevEnd(), () => toast('Bluetooth settings')),
       sep(),
-      item(I.plane, 'Flight mode', state.airplane ? 'On' : 'Off', chevEnd(), () => toast('Flight mode'))
+      item(I.plane, 'Flight mode', state.airplane ? 'On' : 'Off', chevEnd(), () => { state.airplane = !state.airplane; renderStatusIcons(); save(); renderMain(); }),
+      sep(),
+      item(I.globe, 'Mobile hotspot and tethering', 'Off', chevEnd(), () => toast('Hotspot'))
     ));
     head('Sounds and vibration');
-    sc.appendChild(card(item(I.sound, 'Sound mode', state.sound ? 'Sound' : 'Mute', chevEnd(), () => toast('Sound mode'))));
+    sc.appendChild(card(item(I.sound, 'Sound mode', state.soundMode === 'sound' ? 'Sound' : state.soundMode === 'vibrate' ? 'Vibrate' : 'Mute', chevEnd(), () => subSounds())));
     head('Notifications');
-    sc.appendChild(card(item(I.msg, 'Notification settings', null, chevEnd(), () => toast('Notification settings'))));
+    sc.appendChild(card(item(I.msg, 'Notifications', 'App alerts and Do not disturb', chevEnd(), () => subNotifs())));
     head('Display');
     sc.appendChild(card(
       switchItem(I.dark, 'Dark mode', 'One UI 9 dark theme', () => state.theme === 'dark', v => { state.theme = v ? 'dark' : 'light'; applyTheme(); save(); }),
       sep(),
-      item(I.sun, 'Brightness', Math.round(state.brightness * 100) + '%', chevEnd(), () => toast('Use the Quick Panel slider'))
+      item(I.sun, 'Brightness and eye comfort', Math.round(state.brightness * 100) + '%', chevEnd(), () => subDisplay())
     ));
     head('Wallpaper and style');
-    sc.appendChild(card(item(I.gallery, 'Wallpaper', WALLPAPERS[state.wallpaper] ? state.wallpaper[0].toUpperCase() + state.wallpaper.slice(1) : '', chevEnd(), () => subWallpaper())));
+    sc.appendChild(card(
+      item(I.gallery, 'Wallpaper', WALLPAPERS[state.wallpaper] ? state.wallpaper[0].toUpperCase() + state.wallpaper.slice(1) : '', chevEnd(), () => subWallpaper()),
+      sep(),
+      item(I.palette, 'Color palette', (state.accent || 'blue')[0].toUpperCase() + (state.accent || 'blue').slice(1), chevEnd(), () => subAccent())
+    ));
+    head('Lock screen and AOD');
+    sc.appendChild(card(item(I.lock, 'Lock screen', 'Clock style · Always On Display', chevEnd(), () => subLock())));
+    head('Security and privacy');
+    sc.appendChild(card(item(I.shield, 'Security and privacy', 'Screen lock · Find My Mobile', chevEnd(), () => subSecurity())));
+    head('Battery');
+    sc.appendChild(card(item(I.battery, 'Battery', (state.batteryPct ? 'Percentage shown' : 'Percentage hidden') + ' · 96%', chevEnd(), () => subBattery())));
+    head('Digital Wellbeing and parental controls');
+    sc.appendChild(card(item(I.health, 'Digital Wellbeing', 'Screen time and app timers', chevEnd(), () => subDW())));
     head('Advanced features');
     sc.appendChild(card(
       item(I.dex, 'Samsung DeX', 'Continue on a larger screen', chevEnd(), () => { setTimeout(() => enterDex(), 250); }),
       sep(),
       item(I.recents, 'Multi window', 'Split screen and pop-up view', chevEnd(), () => toast('Multi window'))
     ));
+    head('Accounts and backup');
+    sc.appendChild(card(item(I.cloud, 'Accounts and backup', 'Samsung Cloud · Google Drive', chevEnd(), () => toast('Accounts'))));
+    head('Software update');
+    sc.appendChild(card(item(I.down, 'Software update', 'Download and install', chevEnd(), () => subUpdate())));
     head('About phone');
     sc.appendChild(card(
       item(I.phone, 'Phone', 'Galaxy S26 Ultra · SM-S948B', chevEnd(), () => subAbout()),
@@ -1678,11 +1841,11 @@ settingsApp.build = (f) => {
     const sub = el('div', 'app-frame');
     sub.style.cssText = 'position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:2';
     const back = el('div', 'iconbtn rp', I.back);
-    back.style.cssText = 'margin:50px 14px 0';
+    back.style.cssText = 'margin:60px 14px 0 4px';
     back.onclick = () => { click(); sub.style.animation = 'suInBack .3s var(--ease-spring)'; setTimeout(() => sub.remove(), 280); };
-    const h = el('div', 'app-bar'); h.style.paddingTop = '8px';
+    const h = el('div', 'app-bar');
     h.innerHTML = `<h1>${title}</h1>`;
-    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:center;gap:6px';
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start';
     bar.append(back, h);
     const body = el('div', 'app-scroll'); body.style.cssText = 'flex:1;padding:8px 0 80px';
     sub.append(bar, body);
@@ -1696,8 +1859,58 @@ settingsApp.build = (f) => {
     if (state.wifi) {
       b.appendChild(el('div', 'oui-head', 'Available networks'));
       const nets = [['Galaxy Home 5G', 'Connected'], ['ATT-Wifi-7742', 'Secured'], ['Starbucks Guest', 'Open']];
-      b.appendChild(card(...nets.map(([n, s], i) => { const it = item(I.wifi, n, s, '', () => toast('Connected to ' + n)); if (i < nets.length - 1) { } return it; })));
+      b.appendChild(card(...nets.map(([n, st]) => item(I.wifi, n, st, '', () => toast('Connected to ' + n)))));
     }
+  });
+  const subSounds = () => push('Sounds and vibration', b => {
+    const seg = el('div', 'seg');
+    ['sound', 'vibrate', 'mute'].forEach(m => {
+      const btn = el('button', state.soundMode === m ? 'on' : '');
+      btn.textContent = m[0].toUpperCase() + m.slice(1);
+      btn.onclick = () => { click(); state.soundMode = m; state.sound = m === 'sound'; save(); subSounds(); };
+      seg.appendChild(btn);
+    });
+    b.appendChild(seg);
+    b.appendChild(el('div', 'oui-head', 'Volume'));
+    b.appendChild(mkSlider(I.sound, () => state.volume, v => { state.volume = v; }));
+    b.appendChild(el('div', 'oui-head', 'Interaction'));
+    b.appendChild(card(
+      switchItem(null, 'Touch sounds', 'Play sound when you tap the screen', () => state.touchSounds !== false, v => { state.touchSounds = v; save(); }),
+      sep(),
+      switchItem(null, 'Vibration feedback', 'Vibrate on taps', () => true, v => toast(v ? 'Vibration on' : 'Vibration off'))
+    ));
+  });
+  const subNotifs = () => push('Notifications', b => {
+    b.appendChild(el('div', 'oui-head', 'Do not disturb'));
+    b.appendChild(card(switchItem(I.moon, 'Do not disturb', 'Silence calls and alerts', () => state.dnd, v => { state.dnd = v; save(); })));
+    b.appendChild(el('div', 'oui-head', 'App notifications'));
+    const rows = [['messages', 'Messages'], ['calendar', 'Calendar'], ['play', 'Play Store'], ['health', 'Health'], ['clock', 'Clock'], ['gallery', 'Gallery']];
+    const parts = [];
+    rows.forEach(([id, n], i) => {
+      if (i) parts.push(sep());
+      const icon = appById(id) ? appById(id).icon : '';
+      parts.push(switchItem(icon, n, 'Alerts, sounds and badges', () => state.notifPrefs[id] !== false, v => { state.notifPrefs[id] = v; save(); }));
+    });
+    b.appendChild(card(...parts));
+    b.appendChild(el('div', 'oui-head', 'More'));
+    b.appendChild(card(
+      item(null, 'Notification history', 'Recent dismissed alerts', chevEnd(), () => toast('Notification history')),
+      sep(),
+      item(null, 'Status bar', 'Show all notification icons', chevEnd(), () => toast('Status bar'))
+    ));
+  });
+  const subDisplay = () => push('Display', b => {
+    b.appendChild(card(switchItem(I.dark, 'Dark mode', 'One UI 9 dark theme', () => state.theme === 'dark', v => { state.theme = v ? 'dark' : 'light'; applyTheme(); save(); })));
+    b.appendChild(el('div', 'oui-head', 'Brightness'));
+    b.appendChild(mkSlider(I.sun, () => state.brightness, v => { state.brightness = v; applyBrightness(); }));
+    b.appendChild(el('div', 'oui-head', 'Eye comfort'));
+    b.appendChild(card(switchItem(I.shield, 'Eye comfort shield', 'Warmer tones to help you sleep', () => state.eyeComfort, v => { state.eyeComfort = v; applyBrightness(); })));
+    b.appendChild(el('div', 'oui-head', 'Other'));
+    b.appendChild(card(
+      switchItem(I.rotate, 'Auto-rotate screen', 'Rotate with your phone', () => state.autoRotate !== false, v => { state.autoRotate = v; save(); }),
+      sep(),
+      item(I.sun, 'Screen timeout', '1 minute 30 seconds', chevEnd(), () => toast('Screen timeout'))
+    ));
   });
   const subWallpaper = () => push('Wallpaper', b => {
     Object.entries(WALLPAPERS).forEach(([k, w]) => {
@@ -1707,6 +1920,157 @@ settingsApp.build = (f) => {
       d.onclick = () => { click(); state.wallpaper = k; applyWallpaper(); save(); subWallpaper(); toast(k[0].toUpperCase() + k.slice(1) + ' wallpaper applied'); };
       b.appendChild(d);
     });
+  });
+  const subAccent = () => push('Color palette', b => {
+    const wrap = el('div', 'accent-chips');
+    Object.entries(ACCENTS).forEach(([k, a]) => {
+      const c = el('button', 'accent-chip rp' + (state.accent === k ? ' on' : ''));
+      c.style.background = a.c;
+      c.setAttribute('aria-label', k);
+      c.onclick = () => { click(); state.accent = k; applyAccent(); save(); subAccent(); toast(k[0].toUpperCase() + k.slice(1) + ' accent applied'); };
+      wrap.appendChild(c);
+    });
+    b.appendChild(wrap);
+    b.appendChild(el('div', 'su-note', 'Accent colors apply to buttons, toggles and highlights across One UI, just like One UI 9 color palettes.'));
+  });
+  const subLock = () => push('Lock screen and AOD', b => {
+    b.appendChild(el('div', 'oui-head', 'Clock style'));
+    [['default', 'Default'], ['slim', 'Slim'], ['bold', 'Bold']].forEach(([k, n]) => {
+      const c = el('div', 'rp');
+      c.style.cssText = `height:150px;margin:0 16px 14px;border-radius:26px;background:${WALLPAPERS[state.wallpaper].css};display:flex;align-items:center;justify-content:center;border:3px solid ${state.clockStyle === k ? 'var(--blue)' : 'transparent'};transition:border-color .25s`;
+      c.innerHTML = `<span style="color:#fff;font-size:46px;font-weight:${k === 'slim' ? 200 : k === 'bold' ? 800 : 300};text-shadow:0 2px 10px rgba(0,0,0,.35)">9:41</span>`;
+      c.onclick = () => { click(); state.clockStyle = k; save(); buildLock(); subLock(); toast('Clock style: ' + n); };
+      b.appendChild(c);
+    });
+    b.appendChild(el('div', 'oui-head', 'Always On Display'));
+    b.appendChild(card(switchItem(I.clock, 'Always On Display', 'Show the clock while the screen is off', () => state.aod !== false, v => { state.aod = v; save(); })));
+  });
+  const pinFlow = () => {
+    const ov = el('div', 'app-frame');
+    ov.style.cssText = 'position:absolute;inset:0;background:var(--bg);z-index:4;display:flex;flex-direction:column;animation:suIn .32s var(--ease-spring)';
+    const steps = ['Enter current PIN', 'Choose a new PIN', 'Confirm new PIN'];
+    let si = state.pin ? 0 : 1, first = '', code = '', err = '';
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start;padding:0 14px';
+    const back = el('div', 'iconbtn rp', I.back);
+    back.style.cssText = 'margin:60px 14px 0 4px';
+    back.onclick = () => { click(); ov.remove(); };
+    const h = el('div', 'app-bar'); h.innerHTML = '<h1>Change PIN</h1>';
+    bar.append(back, h);
+    const title = el('div'); title.style.cssText = 'text-align:center;font-size:14.5px;font-weight:600;margin-top:26px';
+    const dots = el('div'); dots.style.cssText = 'display:flex;gap:14px;justify-content:center;margin:22px 0 8px';
+    const msg = el('div'); msg.style.cssText = 'text-align:center;color:var(--red,#e5484d);font-size:12.5px;height:18px';
+    const pad = el('div'); pad.style.cssText = 'display:grid;grid-template-columns:repeat(3,74px);gap:14px;justify-content:center;margin-top:auto;padding:0 0 46px';
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
+    const draw = () => {
+      title.textContent = steps[si];
+      dots.innerHTML = [0, 1, 2, 3].map(i => `<i style="width:12px;height:12px;border-radius:50%;background:${i < code.length ? 'var(--blue)' : 'var(--chip)'};transition:background .15s"></i>`).join('');
+      msg.textContent = err;
+    };
+    const advance = () => {
+      if (si === 0) { if (code !== state.pin) { err = 'Wrong PIN. Try again'; code = ''; draw(); return; } si = 1; code = ''; err = ''; }
+      else if (si === 1) { first = code; si = 2; code = ''; err = ''; }
+      else { if (code !== first) { err = "PINs don't match"; code = ''; draw(); return; } state.pin = first; save(); ov.remove(); toast('PIN changed'); return; }
+      draw();
+    };
+    keys.forEach(k => {
+      const btn = el('button', 'rp');
+      btn.style.cssText = `width:74px;height:74px;border-radius:50%;background:var(--card);border:none;font-size:24px;font-weight:600;color:var(--text);font-family:inherit;cursor:pointer;${k === '' ? 'visibility:hidden;background:none' : ''}`;
+      if (k === 'del') btn.innerHTML = I.backsp.replace('<svg', '<svg width="24" height="24"');
+      else if (k) btn.textContent = k;
+      btn.onclick = () => {
+        if (!k) return;
+        click();
+        if (k === 'del') code = code.slice(0, -1);
+        else if (code.length < 4) code += k;
+        if (code.length === 4 && k !== 'del') { draw(); setTimeout(advance, 140); }
+        draw();
+      };
+      pad.appendChild(btn);
+    });
+    ov.append(bar, title, dots, msg, pad);
+    draw();
+    f.appendChild(ov);
+  };
+  const subSecurity = () => push('Security and privacy', b => {
+    b.appendChild(el('div', 'oui-head', 'Lock'));
+    b.appendChild(card(
+      item(I.lock, 'Screen lock type', state.pin ? 'PIN' : 'None', chevEnd(), pinFlow),
+      sep(),
+      item(I.fp, 'Fingerprints', '2 fingerprints registered', chevEnd(), () => toast('Fingerprint settings')),
+      sep(),
+      item(I.location, 'Find My Mobile', 'On · connected', chevEnd(), () => toast('Find My Mobile'))
+    ));
+    b.appendChild(el('div', 'oui-head', 'Privacy'));
+    b.appendChild(card(
+      item(I.shield, 'Permission manager', '12 apps have permissions', chevEnd(), () => toast('Permission manager')),
+      sep(),
+      item(I.gear, 'App security', 'Auto Blocker on', chevEnd(), () => toast('App security'))
+    ));
+  });
+  const subBattery = () => push('Battery', b => {
+    b.appendChild(el('div', 'oui-head', 'Power management'));
+    b.appendChild(card(
+      switchItem(I.battery, 'Power saving', 'Limit performance and background activity', () => state.powerSaving, v => { state.powerSaving = v; save(); }),
+      sep(),
+      item(I.battery, 'Superfast charging', '45 W', chevEnd(), () => toast('Superfast charging'))
+    ));
+    b.appendChild(el('div', 'oui-head', 'Status bar'));
+    b.appendChild(card(switchItem(null, 'Show battery percentage', 'Next to the battery icon', () => state.batteryPct, v => { state.batteryPct = v; save(); renderStatusIcons(); })));
+  });
+  const subDW = () => push('Digital Wellbeing', b => {
+    b.appendChild(el('div', 'oui-head', 'Screen time this week'));
+    const bars = el('div', 'dw-bars');
+    const data = [3.2, 4.8, 2.9, 5.6, 6.4, 7.8, 4.1];
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    data.forEach((h, i) => {
+      const d = el('div', 'db');
+      d.innerHTML = `<i style="height:${Math.round(h / 8 * 100)}%;animation-delay:${i * .06}s"></i><span>${days[i]}</span>`;
+      bars.appendChild(d);
+    });
+    b.appendChild(bars);
+    b.appendChild(el('div', 'su-note', 'Today: 4h 6m — 12% less than last week. Wind Down starts at 11 PM.'));
+    b.appendChild(el('div', 'oui-head', 'App timers'));
+    b.appendChild(card(
+      item(null, 'Play Store', '1h 20m today', chevEnd(), () => toast('App timer set')),
+      sep(),
+      item(null, 'Internet', '48m today', chevEnd(), () => toast('App timer set')),
+      sep(),
+      item(null, 'Games', '2h 05m today', chevEnd(), () => toast('App timer set'))
+    ));
+  });
+  const subUpdate = () => push('Software update', b => {
+    const c = el('div', 'oui-card');
+    c.style.cssText = 'margin:8px 16px;padding:30px 22px;text-align:center';
+    c.innerHTML = `<div style="width:66px;height:66px;margin:0 auto 14px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;color:var(--blue)">${I.down.replace('<svg', '<svg width="30" height="30"')}</div>
+      <div style="font-weight:700;font-size:16px">One UI 9</div>
+      <div style="color:var(--text2);font-size:13px;margin-top:4px">Current version: UP1A.250705.001</div>`;
+    const prog = el('div');
+    prog.style.cssText = 'height:6px;border-radius:3px;background:var(--chip);margin:20px 30px 0;overflow:hidden;opacity:0;transition:opacity .3s';
+    prog.innerHTML = '<div style="height:100%;width:0;background:var(--blue);transition:width .25s linear"></div>';
+    const btn = el('button', 'btn');
+    btn.style.cssText = 'display:block;margin:20px 30px 0;width:calc(100% - 60px)';
+    btn.textContent = 'Check for updates';
+    btn.onclick = () => {
+      click();
+      btn.disabled = true; btn.textContent = 'Checking\u2026';
+      prog.style.opacity = '1';
+      let p = 0;
+      const iv = setInterval(() => {
+        p += 7 + Math.random() * 12;
+        prog.firstChild.style.width = Math.min(p, 100) + '%';
+        if (p >= 100) {
+          clearInterval(iv);
+          setTimeout(() => {
+            prog.style.opacity = '0';
+            btn.textContent = 'Your software is up to date';
+            btn.disabled = false;
+            toast('Software is up to date');
+          }, 500);
+        }
+      }, 220);
+    };
+    b.append(c, prog, btn);
+    b.appendChild(el('div', 'su-note', 'Your phone is already running the latest One UI 9 version.'));
   });
   const subAbout = () => push('About phone', b => {
     b.appendChild(el('div', 'oui-head', 'Device information'));
@@ -1723,7 +2087,6 @@ settingsApp.build = (f) => {
     b.appendChild(el('div', 'su-note', 'One UI 9 web edition — a fan-made recreation. Not affiliated with Samsung Electronics.'));
   });
   renderMain();
-  f._back = () => { const subs = f.querySelectorAll('.app-frame.app-frame'); return false; };
 };
 
 /* ---- Phone ---- */
@@ -2219,6 +2582,269 @@ appById('store').build = (f) => {
 };
 
 /* ---- Health ---- */
+/* ---- Play Store ---- */
+const PS_GRADS = [
+  'linear-gradient(160deg,#6ea8ff,#1b6ef3)', 'linear-gradient(160deg,#b48cf5,#7c3aed)', 'linear-gradient(160deg,#f9a8d4,#ec4899)',
+  'linear-gradient(160deg,#6ee7b7,#0d9488)', 'linear-gradient(160deg,#fcd34d,#f59e0b)', 'linear-gradient(160deg,#fca5a5,#ef4444)',
+  'linear-gradient(160deg,#93c5fd,#3b82f6)', 'linear-gradient(160deg,#a5b4fc,#6366f1)', 'linear-gradient(160deg,#86efac,#22c55e)',
+  'linear-gradient(160deg,#5eead4,#14b8a6)', 'linear-gradient(160deg,#fdba74,#f97316)', 'linear-gradient(160deg,#c4b5fd,#8b5cf6)',
+  'linear-gradient(160deg,#9aa3b2,#4b5563)', 'linear-gradient(160deg,#7dd3fc,#0ea5e9)',
+];
+const PS_DEVS = ['Lumen Labs', 'Nova Interactive', 'Pixel Forge', 'Brightside', 'Kite Studio', 'Orbit Soft', 'Cobalt Works', 'Maple Media', 'Foxglove', 'Zephyr Games', 'Bluepine', 'Tandem Digital'];
+const PS_CATS = {
+  'Games': ['Aether Quest', 'Brick Blitz', 'Castle Craft', 'Drift Legends', 'Ember Isles', 'Frost Runners', 'Galaxy Patrol', 'Harbor Tycoon', 'Island Mystery', 'Jelly Jump', "Knight's Vow", 'Lumen Path', 'Mech Arena', 'Neon Racer', 'Orbit Hopper', 'Pixel Farms', 'Quest Cards', 'Rift Warriors', 'Sky Kingdoms', 'Temple Dash', 'Ultravoid', 'Voxel Tactics', 'Wander Worlds', 'Zen Sudoku', 'Zone Zero'],
+  'Social': ['Chatterbox', 'Circle', 'Datemuse', 'Echofeed', 'Friendline', 'Gossipwall', 'Hangout Hub', 'Instalens', 'Journaly', 'Kinfolk', 'Linkup', 'Meetwave'],
+  'Productivity': ['Taskwise', 'Notely Pro', 'Calendia', 'FocusFlow', 'Documark', 'Sheetcraft', 'Scanly', 'Signeasy', 'Vaultkey', 'Zipboard', 'Cloudsync', 'Printpal', 'Remindly', 'Templateo', 'Workstream'],
+  'Entertainment': ['Streamix', 'Tunecast', 'Vidly', 'Podcastle', 'Radiofy', 'Karaoke Night', 'Comedyclip', 'Moviemate', 'Serially', 'Watchlist Pro', 'Animezone', 'Mangaflow', 'Lyriclab', 'Concertgo', 'Trailerveil'],
+  'Lifestyle': ['Foodee', 'Outfitly', 'Homeplan', 'Gardenia', 'Petpal', 'Travelbug', 'Citywalk', 'Reciper', 'Shopsmart', 'Fitlife', 'Sleepeasy', 'Budgetbuddy'],
+  'Tools': ['Flashlight+', 'Compass Pro', 'Level Tool', 'Unit Convert', 'QR Master', 'WiFi Analyzer', 'Speedtest Go', 'Screen Recorder', 'File Manager+', 'Battery Doctor', 'Auto Cleaner', 'Widget Lab'],
+  'Health & Fitness': ['Stepify', 'Yoga Flow', 'Hydro Coach', 'Meditune', 'Runkeeper Plus', 'Cycle Map', 'Sleep Cycle', 'Calorie Count', 'Stretchly', 'Heart Rate'],
+  'Education': ['Lingoleap', 'Mathmagee', 'Science Lab', 'History Hub', 'Brainzy', 'Flashlearn', 'Coding Cadet', 'Art Master', 'Music Theory', 'Quizwhiz'],
+};
+const PS_DESC = {
+  'Games': 'Jump into {n} — smooth controls, gorgeous visuals and fresh events every season. Team up with friends, climb the leaderboards and unlock rewards.',
+  'Social': '{n} brings people closer. Share moments, join communities and chat with the people who matter — with privacy controls that put you first.',
+  'Productivity': '{n} helps you get more done. Sync across devices, collaborate in real time and keep your projects moving wherever you are.',
+  'Entertainment': '{n} is your home for endless entertainment. Stream, listen and discover new favorites with personalized picks updated daily.',
+  'Lifestyle': '{n} makes everyday life easier — smarter planning, helpful reminders and tools designed around the way you live.',
+  'Tools': '{n} packs powerful utilities into a clean, simple interface. Fast, reliable and free — exactly what your phone needs.',
+  'Health & Fitness': '{n} supports your wellness goals with guided plans, progress tracking and gentle nudges that keep you moving.',
+  'Education': '{n} turns learning into play. Bite-sized lessons, adaptive challenges and streaks that keep you coming back.',
+};
+function strHash(str) { let h = 0; for (const ch of str) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
+function psApps() {
+  if (psApps._cache) return psApps._cache;
+  const list = [];
+  Object.entries(PS_CATS).forEach(([cat, names]) => names.forEach(n => {
+    const h = strHash(n);
+    list.push({
+      name: n, cat, h,
+      grad: PS_GRADS[h % PS_GRADS.length],
+      dev: PS_DEVS[h % PS_DEVS.length],
+      rating: (3.8 + ((h >>> 3) % 12) / 10).toFixed(1),
+      dl: (5 + h % 900) + 'M+',
+      size: (14 + h % 70) + ' MB',
+      id: 'x' + n.toLowerCase().replace(/[^a-z0-9]/g, ''),
+    });
+  }));
+  psApps._cache = list;
+  return list;
+}
+function registerExtApp(e) {
+  if (appById(e.id)) return;
+  const a = { id: e.id, name: e.name, grad: e.grad, light: false, icon: `<span style="font-weight:800;font-size:25px">${e.name[0]}</span>` };
+  APPS.push(a);
+  a.build = (fr) => {
+    fr.append(appBar(e.name));
+    const sc = el('div', 'app-scroll'); sc.style.paddingBottom = '90px';
+    const hero = el('div', 'rp');
+    hero.style.cssText = `margin:8px 16px 16px;border-radius:30px;padding:28px 24px;color:#fff;background:${e.grad}`;
+    hero.innerHTML = `<div style="font-size:24px;font-weight:800">${e.name}</div>
+      <div style="opacity:.85;font-size:12.5px;margin-top:4px">${e.cat} · v${1 + e.h % 8}.${e.h % 10}.0 · ${e.name[0] === e.name[0].toUpperCase() ? 'Free' : 'Free'}</div>
+      <div style="font-size:13px;line-height:1.65;margin-top:14px;opacity:.92">${(PS_DESC[e.cat] || 'Enjoy {n} — polished, fast and free.').replace('{n}', e.name)}</div>`;
+    sc.appendChild(hero);
+    const mk = (ic, t, sub) => sc.appendChild(card(item(ic, t, sub, chevEnd(), () => toast(t))));
+    mk(null, 'Continue where you left off', 'Your recent items sync automatically');
+    sc.appendChild(el('div', 'oui-head', 'More'));
+    mk(null, 'Favorites', 'Nothing here yet — star things to see them here');
+    mk(null, 'Recent activity', 'Last 7 days');
+    mk(I.gear, 'Settings', 'Notifications, sync and storage');
+    fr.appendChild(sc);
+  };
+}
+appById('play').build = (f) => {
+  const apps = psApps();
+  const isInstalled = a => state.installed.some(e => e.id === a.id);
+  f.append(appBar('Play Store', null, '<div class="avatar" style="width:34px;height:34px;font-size:14px">G</div>'));
+  const seg = el('div', 'seg'); seg.style.margin = '4px 12px 10px';
+  let tab = 'For you';
+  ['For you', 'Top charts', 'Categories'].forEach(t => {
+    const b = el('button', t === tab ? 'on' : ''); b.textContent = t;
+    b.onclick = () => { click(); tab = t; seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.textContent === tab)); render(); };
+    seg.appendChild(b);
+  });
+  const sr = el('div');
+  sr.style.cssText = 'margin:0 14px 12px;display:flex;gap:10px;align-items:center;background:var(--card);border-radius:24px;padding:12px 18px';
+  sr.innerHTML = I.search.replace('<svg', '<svg width="16" height="16" fill="var(--text2)"');
+  const inp = el('input');
+  inp.placeholder = 'Search apps and games';
+  inp.style.cssText = 'flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13.5px;font-family:inherit';
+  inp.oninput = () => render();
+  sr.appendChild(inp);
+  const sc = el('div', 'app-scroll'); sc.style.cssText = 'flex:1;padding-bottom:90px';
+  f.append(seg, sr, sc);
+  const letterIcon = (a, size) => {
+    const ic = el('div', 'aicon rp');
+    ic.style.cssText = `background:${a.grad};color:#fff${size ? ';width:' + size + 'px;height:' + size + 'px;border-radius:' + Math.round(size * .4) + 'px' : ''}`;
+    ic.innerHTML = `<span style="font-weight:800;font-size:${size ? Math.round(size * .42) : 25}px">${a.name[0]}</span>`;
+    return ic;
+  };
+  const psCard = a => {
+    const c = el('div', 'ps-card rp');
+    c.appendChild(letterIcon(a, 60));
+    c.appendChild(el('div', 'psn', a.name));
+    c.appendChild(el('div', 'psr', a.rating + ' \u2605'));
+    if (isInstalled(a)) c.appendChild(el('div', 'psr', 'Installed'));
+    c.onclick = () => { click(); openDetail(a); };
+    return c;
+  };
+  const psRow = a => {
+    const it = el('div', 'oui-item rp');
+    it.style.cssText = 'gap:14px';
+    const end = isInstalled(a) ? '<span class="oi-end installed-badge">Installed</span>' : `<span class="oi-end" style="color:var(--blue);font-weight:700;font-size:13px">Install</span>`;
+    it.innerHTML = `<div style="width:46px;height:46px;border-radius:16px;flex:none;background:${a.grad};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px">${a.name[0]}</div>
+      <div class="oi-main"><div class="oi-t">${a.name}</div><div class="oi-s">${a.cat} · ${a.rating} \u2605 · ${a.dl}</div></div>${end}`;
+    it.onclick = () => { click(); openDetail(a); };
+    return it;
+  };
+  const row = (title, sub, list) => {
+    sc.appendChild(el('div', 'ps-row-title', `<b>${title}</b><span>${sub || ''}</span>`));
+    const h = el('div', 'ps-scroll');
+    list.forEach(a => h.appendChild(psCard(a)));
+    sc.appendChild(h);
+  };
+  const openCat = cat => {
+    const d = el('div', 'ps-detail');
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start;padding:0 14px';
+    const back = el('div', 'iconbtn rp', I.back);
+    back.style.cssText = 'margin:60px 14px 0 4px';
+    back.onclick = () => { click(); d.remove(); };
+    const h = el('div', 'app-bar'); h.innerHTML = `<h1>${cat}</h1>`;
+    bar.append(back, h);
+    const body = el('div', 'app-scroll'); body.style.cssText = 'flex:1;padding:8px 0 90px';
+    const c = el('div', 'oui-card');
+    apps.filter(a => a.cat === cat).forEach((a, i) => { if (i) c.appendChild(sep()); c.appendChild(psRow(a)); });
+    body.appendChild(c);
+    d.append(bar, body);
+    f.appendChild(d);
+  };
+  const installApp = a => {
+    if (!isInstalled(a)) {
+      const e = { id: a.id, name: a.name, grad: a.grad, cat: a.cat, h: a.h };
+      state.installed.push(e); save();
+      registerExtApp(e);
+      buildDrawer();
+    }
+  };
+  const openDetail = a => {
+    const d = el('div', 'ps-detail');
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start;padding:0 14px';
+    const back = el('div', 'iconbtn rp', I.back);
+    back.style.cssText = 'margin:60px 14px 0 4px';
+    back.onclick = () => { click(); d.remove(); };
+    const h = el('div', 'app-bar'); h.innerHTML = `<h1>${a.name}</h1>`;
+    bar.append(back, h);
+    const body = el('div', 'app-scroll'); body.style.cssText = 'flex:1;padding:0 0 100px';
+    const hc = el('div', 'ps-head-card');
+    const ic = letterIcon(a, 74);
+    const tx = el('div');
+    tx.innerHTML = `<div style="font-weight:800;font-size:18px">${a.name}</div><div class="psd">${a.dev}</div><div class="psd">${a.cat}</div>`;
+    hc.append(ic, tx);
+    body.appendChild(hc);
+    body.insertAdjacentHTML('beforeend', `<div class="ps-meta"><div><b>${a.rating} \u2605</b>${(a.h % 40) + 8}K reviews</div><div><b>${a.dl}</b>Downloads</div><div><b>${a.size}</b>Size</div><div><b>${3 + a.h % 13}+</b>Rated for</div></div>`);
+    const btn = el('button', 'ps-install rp');
+    btn.style.cssText += ';width:calc(100% - 60px);border:none;font-family:inherit;cursor:pointer';
+    if (isInstalled(a)) { btn.classList.add('done'); btn.innerHTML = '<span class="installed-badge">Open</span>'; }
+    else btn.innerHTML = '<div class="fillp"></div><span>Install</span>';
+    btn.onclick = () => {
+      if (isInstalled(a)) { d.remove(); openApp(a.id); return; }
+      const fill = btn.querySelector('.fillp');
+      btn.disabled = true;
+      let p = 0;
+      const iv = setInterval(() => {
+        p += 6 + Math.random() * 9;
+        fill.style.width = Math.min(p, 100) + '%';
+        btn.querySelector('span').textContent = 'Installing\u2026 ' + Math.min(99, Math.round(p)) + '%';
+        if (p >= 100) {
+          clearInterval(iv);
+          installApp(a);
+          btn.classList.add('done'); btn.disabled = false;
+          btn.innerHTML = '<span class="installed-badge">Open</span>';
+          toast(a.name + ' installed');
+        }
+      }, 130);
+    };
+    body.appendChild(btn);
+    const shots = el('div', 'ps-shots');
+    for (let i = 0; i < 3; i++) {
+      const sh = el('div', 'ps-shot');
+      sh.style.background = a.grad;
+      sh.innerHTML = `
+        <div style="position:absolute;top:18px;left:16px;right:16px;height:14px;border-radius:8px;background:rgba(255,255,255,${.38 - i * .06})"></div>
+        <div style="position:absolute;top:${44 + i * 8}px;left:16px;width:${64 - i * 10}%;height:12px;border-radius:6px;background:rgba(255,255,255,.28)"></div>
+        <div style="position:absolute;top:${74 + i * 8}px;left:16px;width:${40 + i * 8}%;height:12px;border-radius:6px;background:rgba(255,255,255,.2)"></div>
+        <div style="position:absolute;bottom:20px;left:16px;right:16px;height:44px;border-radius:14px;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">${a.name}</div>`;
+      shots.appendChild(sh);
+    }
+    body.appendChild(shots);
+    body.insertAdjacentHTML('beforeend', `<div class="oui-head" style="padding:6px 30px 0">About this app</div>
+      <div class="ps-desc">${PS_DESC[a.cat].replace('{n}', a.name)}</div>
+      <div class="oui-head" style="padding:6px 30px 0">Ratings and reviews</div>
+      <div class="ps-desc"><b style="color:var(--text);font-size:16px">${a.rating} \u2605\u2605\u2605\u2605\u2606</b><br>${(a.h % 30) + 12}K reviews · ${(a.h % 40) + 8}K this month</div>`);
+    d.append(bar, body);
+    f.appendChild(d);
+  };
+  const renderForYou = () => {
+    const heroApp = apps[7];
+    const hero = el('div', 'ps-hero rp');
+    hero.style.background = heroApp.grad;
+    hero.innerHTML = `<div class="ph-k">EDITOR'S CHOICE</div><div class="ph-t">${heroApp.name}</div><div class="ph-s">${heroApp.cat} · ${heroApp.rating} \u2605 · ${heroApp.dl} downloads</div>`;
+    hero.onclick = () => { click(); openDetail(heroApp); };
+    sc.appendChild(hero);
+    row('Recommended for you', 'Based on your activity', apps.slice(20, 32));
+    row('Popular this week', '', apps.slice(40, 52));
+    row('New & updated', 'Fresh this month', apps.slice(60, 72));
+    ['Games', 'Social', 'Productivity'].forEach(cat => row(cat, 'See all', apps.filter(a => a.cat === cat).slice(0, 10)));
+  };
+  const renderTop = () => {
+    sc.appendChild(el('div', 'oui-head', 'Top free apps'));
+    const c = el('div', 'oui-card');
+    const top = apps.slice().sort((x, y) => y.rating - x.rating || y.h % 100 - x.h % 100).slice(0, 25);
+    top.forEach((a, i) => {
+      if (i) c.appendChild(sep());
+      const it = el('div', 'oui-item rp');
+      it.style.cssText = 'gap:12px';
+      const end = isInstalled(a) ? '<span class="oi-end installed-badge">Installed</span>' : `<span class="oi-end" style="font-size:12.5px;color:var(--text2)">${a.rating} \u2605</span>`;
+      it.innerHTML = `<span class="rank">${i + 1}</span><div style="width:44px;height:44px;border-radius:15px;flex:none;background:${a.grad};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${a.name[0]}</div>
+        <div class="oi-main"><div class="oi-t">${a.name}</div><div class="oi-s">${a.cat} · ${a.dl}</div></div>${end}`;
+      it.onclick = () => { click(); openDetail(a); };
+      c.appendChild(it);
+    });
+    sc.appendChild(c);
+  };
+  const renderCats = () => {
+    sc.appendChild(el('div', 'oui-head', 'Browse categories'));
+    const grid = el('div', 'ps-cat-grid');
+    Object.entries(PS_CATS).forEach(([cat, names]) => {
+      const d = el('div', 'ps-cat rp');
+      d.style.background = PS_GRADS[strHash(cat) % PS_GRADS.length];
+      d.innerHTML = `<div>${cat}<span style="display:block;font-weight:500;font-size:11.5px;opacity:.85;margin-top:2px">${names.length} apps</span></div>`;
+      d.onclick = () => { click(); openCat(cat); };
+      grid.appendChild(d);
+    });
+    sc.appendChild(grid);
+  };
+  const render = () => {
+    sc.innerHTML = '';
+    const q = inp.value.trim().toLowerCase();
+    if (q) {
+      sc.appendChild(el('div', 'oui-head', 'Results for "' + inp.value.trim() + '"'));
+      const matches = apps.filter(a => a.name.toLowerCase().includes(q));
+      if (!matches.length) sc.insertAdjacentHTML('beforeend', '<div style="text-align:center;color:var(--text2);font-size:13px;padding:26px 0">No apps found</div>');
+      else {
+        const c = el('div', 'oui-card');
+        matches.slice(0, 30).forEach((a, i) => { if (i) c.appendChild(sep()); c.appendChild(psRow(a)); });
+        sc.appendChild(c);
+      }
+      return;
+    }
+    if (tab === 'For you') renderForYou();
+    else if (tab === 'Top charts') renderTop();
+    else renderCats();
+  };
+  render();
+};
+
 appById('health').build = (f) => {
   f.append(appBar('Health', 'Redesigned in One UI 9'));
   const sc = el('div', 'app-scroll'); sc.style.padding = '10px 16px 90px';
@@ -2414,7 +3040,7 @@ document.addEventListener('keydown', e => {
 /* ---------- init ---------- */
 function init() {
   applyTheme(); applyWallpaper(); applyNavMode();
-  seedNotifs(); buildHome(); buildDrawer(); setupShadeGestures(); setupNav(); setupSideButtons();
+  seedNotifs(); state.installed.forEach(e => registerExtApp(e)); buildHome(); buildDrawer(); setupShadeGestures(); setupNav(); setupSideButtons();
   renderShade(); renderStatusIcons(); tickClock();
   // media art canvas
   requestAnimationFrame(() => {
