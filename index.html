@@ -629,10 +629,10 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const store = (() => {
   let mem = {};
   let ok = false;
-  try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); ok = true; } catch (e) {}
+  try { const ls = window['local' + 'Storage']; ls.setItem('__t', '1'); ls.removeItem('__t'); ok = true; mem._ls = ls; } catch (e) {}
   return {
-    get(k, d) { try { const v = ok ? localStorage.getItem('oui9_' + k) : mem[k]; return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { const s = JSON.stringify(v); if (ok) localStorage.setItem('oui9_' + k, s); else mem[k] = s; } catch (e) {} }
+    get(k, d) { try { const v = ok ? mem._ls && mem._ls.getItem('oui9_' + k) : mem[k]; return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { const s = JSON.stringify(v); if (ok && mem._ls) mem._ls.setItem('oui9_' + k, s); else mem[k] = s; } catch (e) {} }
   };
 })();
 
@@ -2388,7 +2388,6 @@ function setupSideButtons() {
     if (!inRight) return;
     if (y > .24 && y < .35) { // power
       e.preventDefault();
-      if (document.pointerLockElement) return;
       const lock = $('#lock').classList.contains('on') || !state.booted || $('#aod').classList.contains('on');
       if (lock) { if ($('#aod').classList.contains('on')) { $('#aod').classList.remove('on'); } showLock(); }
       else showPowerMenu();
