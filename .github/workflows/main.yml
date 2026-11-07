@@ -1,0 +1,3063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="One UI 9 — a faithful web recreation of Samsung's One UI 9 experience with setup wizard, DeX mode, and full animations.">
+<title>One UI 9</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231428a0'/%3E%3Ctext x='32' y='44' font-family='Arial' font-size='34' font-weight='800' fill='%23fff' text-anchor='middle'%3E9%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ One UI 9 web — design tokens ============ */
+:root{
+  --font: 'Inter','SamsungOne','Segoe UI',system-ui,-apple-system,sans-serif;
+  --blue:#1b6ef3; --blue-press:#1257c9;
+  --ease-spring:cubic-bezier(.22,1.15,.32,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --nav-h:26px;
+}
+#phone[data-theme=light],#dex[data-theme=light]{
+  --bg:#f3f4f6; --card:#ffffff; --card2:#f7f8fa; --chip:#eceef1;
+  --text:#0d0e10; --text2:#7c7f86; --line:#e6e8ec; --divider:#f0f1f4;
+  --toggle-off:#c9ccd3; --nav-ink:#0d0e10;
+  --sb-ink:#0d0e10; --scrim:rgba(10,12,16,.42);
+}
+#phone[data-theme=dark],#dex[data-theme=dark]{
+  --bg:#000000; --card:#1b1b1d; --card2:#202023; --chip:#2a2a2e;
+  --text:#f3f4f6; --text2:#a2a5ad; --line:#2b2b30; --divider:#26262a;
+  --toggle-off:#59595f; --nav-ink:#f3f4f6;
+  --sb-ink:#ffffff; --scrim:rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--font);background:#0b0d12;color:#fff;overflow:hidden;
+  background:radial-gradient(1200px 800px at 70% -10%,#1d2740 0%,#0b0d12 55%)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+img,svg{display:block;max-width:100%}
+::selection{background:rgba(27,110,243,.3)}
+
+/* ============ Stage & device ============ */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;gap:56px;perspective:1400px}
+#stage-hint{position:fixed;left:28px;bottom:24px;color:rgba(255,255,255,.45);font-size:12px;line-height:1.8;max-width:230px;user-select:none}
+#stage-hint b{color:rgba(255,255,255,.75);font-weight:600}
+#phone-wrap{position:relative;height:min(92vh,900px);aspect-ratio:420/905;flex:none}
+#phone{position:absolute;inset:0;border-radius:52px;background:linear-gradient(160deg,#3a3f4a,#15171c 30%,#0c0d10 70%,#2e323b);
+  box-shadow:0 40px 90px -20px rgba(0,0,0,.7),inset 0 0 2px rgba(255,255,255,.28),inset 0 0 0 3px #05060a;padding:10px;user-select:none}
+#phone::after{content:'';position:absolute;top:13%;right:-3px;width:3px;height:10%;border-radius:2px;background:linear-gradient(#4a4f5a,#22252c)} /* vol rocker */
+#phone::before{content:'';position:absolute;top:26%;right:-3.5px;width:4px;height:6%;border-radius:2px;background:linear-gradient(#5a6070,#2a2d35)} /* power */
+#screen{position:absolute;inset:10px;border-radius:44px;overflow:hidden;background:#000;
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.8)}
+#punch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;
+  background:#000;z-index:610;pointer-events:none;box-shadow:inset 0 0 2px 1px #0a1a2f,0 0 0 2px rgba(255,255,255,.03)}
+/* status bar */
+#statusbar{position:absolute;top:0;left:0;right:0;height:44px;z-index:365;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 26px 0;font-size:12.5px;font-weight:600;letter-spacing:.2px;color:var(--sb-ink);pointer-events:auto;transition:color .3s}
+#statusbar .sbi{display:flex;align-items:center;gap:5px}
+#statusbar svg{width:14px;height:14px}
+/* wallpaper */
+#wallpaper{position:absolute;inset:0;z-index:0;transition:background .5s var(--ease-out), filter .4s}
+#screen::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(120% 90% at 50% 0%,transparent 40%,rgba(0,0,0,.35));}
+#screen.dim::before{opacity:1}
+
+/* ============ Boot ============ */
+#boot{position:absolute;inset:0;z-index:600;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .8s}
+#boot .slogo{font-weight:800;font-size:30px;letter-spacing:14px;text-indent:14px;color:#fff;animation:bootGlow 1.6s ease-in-out infinite}
+#boot .sub{margin-top:18px;color:#7d8596;font-size:12.5px;letter-spacing:3px;text-indent:3px;opacity:0;animation:bootGlow 1.6s .4s ease-in-out infinite}
+#boot .ver{position:absolute;bottom:34px;color:#4c515e;font-size:11px;letter-spacing:.4px}
+@keyframes bootGlow{0%,100%{opacity:.35;text-shadow:0 0 12px rgba(120,160,255,0)}50%{opacity:1;text-shadow:0 0 22px rgba(130,170,255,.75)}}
+
+/* ============ Setup wizard ============ */
+#setup{position:absolute;inset:0;z-index:560;background:var(--bg);display:none;flex-direction:column;color:var(--text)}
+#setup.on{display:flex}
+#setup .su-top{padding:60px 28px 12px;flex:none}
+#setup .su-title{font-size:30px;font-weight:700;letter-spacing:-.5px;line-height:1.2}
+#setup .su-sub{margin-top:10px;color:var(--text2);font-size:14px;line-height:1.5;max-width:330px}
+#setup .su-body{flex:1;overflow-y:auto;padding:8px 20px 20px;overscroll-behavior:contain}
+#setup .su-bottom{flex:none;padding:14px 20px calc(22px + var(--nav-h));display:flex;gap:10px;align-items:center}
+.su-card{background:var(--card);border-radius:26px;padding:6px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.su-row{display:flex;align-items:center;gap:16px;padding:14px 22px;font-size:15px;font-weight:500;position:relative;overflow:hidden;border-radius:20px}
+.su-row .chk{margin-left:auto;width:22px;height:22px;flex:none}
+.su-row .chk svg{opacity:0;transition:opacity .2s}
+.su-row.sel .chk svg{opacity:1}
+.su-row.sel{background:rgba(27,110,243,.08)}
+.su-head{padding:22px 22px 8px;font-size:13px;font-weight:700;color:var(--text2)}
+.su-input{width:100%;background:var(--card2);border:none;outline:none;border-radius:18px;padding:16px 20px;font-size:15px;color:var(--text)}
+.su-input::placeholder{color:var(--text2)}
+.su-note{font-size:12px;color:var(--text2);padding:14px 8px;line-height:1.6}
+.btn{flex:1;background:var(--blue);color:#fff;border-radius:24px;padding:15px;font-size:15.5px;font-weight:600;
+  transition:transform .15s var(--ease-out),background .2s,box-shadow .2s;box-shadow:0 6px 18px -6px rgba(27,110,243,.5)}
+.btn:active{transform:scale(.97);background:var(--blue-press)}
+.btn.ghost{background:var(--chip);color:var(--text);box-shadow:none}
+.su-dots{display:flex;gap:6px;justify-content:center;padding:46px 0 10px}
+.su-dots i{width:6px;height:6px;border-radius:3px;background:var(--toggle-off);transition:all .3s}
+.su-dots i.on{width:18px;background:var(--blue)}
+.su-step{position:absolute;inset:0;display:flex;flex-direction:column;visibility:hidden}
+.su-step.on{visibility:visible}
+.su-step.enter{animation:suIn .38s var(--ease-spring)}
+.su-step.back-enter{animation:suInBack .38s var(--ease-spring)}
+@keyframes suIn{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+@keyframes suInBack{from{transform:translateX(-60px);opacity:0}to{transform:none;opacity:1}}
+
+/* fingerprint setup */
+.fp-big{width:120px;height:120px;margin:26px auto 8px;position:relative}
+.fp-big svg{width:100%;height:100%}
+.fp-big .ring{position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(27,110,243,.5);opacity:0;transform:scale(.6)}
+.fp-big.scan .ring{animation:fpRing 1s ease-out}
+@keyframes fpRing{0%{opacity:1;transform:scale(.55)}100%{opacity:0;transform:scale(1.25)}}
+.fp-progress{display:flex;gap:5px;justify-content:center;margin:18px 0 6px}
+.fp-progress i{width:34px;height:5px;border-radius:3px;background:var(--chip);transition:background .3s}
+.fp-progress i.on{background:var(--blue)}
+
+/* PIN pad */
+.pin-dots{display:flex;gap:16px;justify-content:center;margin:30px 0 26px}
+.pin-dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--text2);transition:all .2s var(--ease-spring)}
+.pin-dots i.fill{background:var(--blue);border-color:var(--blue);transform:scale(1.15)}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 34px}
+.pinpad button{aspect-ratio:1.45;border-radius:50%/44%;background:var(--card);font-size:24px;font-weight:500;position:relative;overflow:hidden;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);transition:transform .12s}
+.pinpad button:active{transform:scale(.9);background:var(--chip)}
+.pinpad button small{display:block;font-size:10px;font-weight:600;color:var(--text2);letter-spacing:1px;margin-top:2px}
+.pinpad button.ghostb{background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:center}
+.pinpad button svg{width:26px;height:26px}
+
+/* ============ Lock screen ============ */
+#lock{position:absolute;inset:0;z-index:300;display:none;flex-direction:column;color:#fff}
+#lock.on{display:flex}
+#lock.locking{transition:transform .5s var(--ease-spring),opacity .5s}
+#lock .lk-clock{margin:120px 34px 0;font-weight:300;font-size:86px;line-height:.95;letter-spacing:-2px;
+  text-shadow:0 2px 30px rgba(0,0,0,.25)}
+#lock .lk-clock b{font-weight:600}
+#lock .lk-date{margin:14px 36px 0;font-size:15px;font-weight:500;opacity:.92;display:flex;gap:10px;align-items:center}
+#lock .lk-wx{margin:4px 36px 0;font-size:13.5px;opacity:.75;display:flex;gap:7px;align-items:center}
+#lock .lk-notifs{margin-top:auto;padding:6px 18px 6px;display:flex;flex-direction:column;gap:8px}
+.lk-notif{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.14);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-radius:22px;padding:12px 18px;animation:notifIn .5s var(--ease-spring)}
+.lk-notif .ni{width:22px;height:22px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center}
+.lk-notif .ni svg{width:13px;height:13px}
+.lk-notif .nt{font-size:13.5px;font-weight:600}
+.lk-notif .nm{font-size:12px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px}
+@keyframes notifIn{from{transform:translateY(24px) scale(.95);opacity:0}to{transform:none;opacity:1}}
+#lock .lk-bottom{padding:8px 0 46px;display:flex;flex-direction:column;align-items:center;gap:14px}
+#lock .lk-phone{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.18);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center}
+#lock .lk-fp{width:34px;height:34px;opacity:.9;animation:fpHint 2.6s ease-in-out infinite}
+@keyframes fpHint{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+#lock .lk-swipe{font-size:11.5px;font-weight:600;letter-spacing:2.5px;color:rgba(255,255,255,.75);text-transform:uppercase;animation:swipeUp 2s ease-in-out infinite}
+@keyframes swipeUp{0%,100%{opacity:.5;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+/* AOD */
+#aod{position:absolute;inset:0;z-index:340;background:#000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+#aod.on{display:flex}
+#aod .a-t{font-size:64px;font-weight:200;color:#dfe4ee;letter-spacing:-1px}
+#aod .a-d{font-size:13px;color:#6a7080}
+
+/* ============ Home screen ============ */
+#home{position:absolute;inset:0;z-index:100;display:none;flex-direction:column;transition:transform .45s var(--ease-spring),opacity .4s,border-radius .45s}
+#home.on{display:flex}
+#home.unlocking{animation:homeIn .55s var(--ease-spring)}
+@keyframes homeIn{from{transform:scale(1.12);opacity:0}to{transform:none;opacity:1}}
+#home-pages{flex:1;display:flex;overflow:hidden;position:relative}
+.hpage{min-width:100%;padding:64px 22px 8px;display:flex;flex-direction:column;gap:20px;transition:transform .4s var(--ease-spring)}
+/* widgets */
+.widget-clock{background:rgba(255,255,255,.16);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-radius:30px;padding:20px 24px;color:#fff;
+  display:flex;align-items:center;gap:18px;box-shadow:0 8px 30px -12px rgba(0,0,0,.35)}
+.wc-time{font-size:44px;font-weight:300;line-height:1;letter-spacing:-1px}
+.wc-time b{font-weight:600}
+.wc-sub{font-size:12.5px;opacity:.85;margin-top:6px;line-height:1.4}
+.widget-wx{background:rgba(255,255,255,.16);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-radius:30px;padding:18px 22px;color:#fff;
+  display:flex;align-items:center;gap:16px;box-shadow:0 8px 30px -12px rgba(0,0,0,.35)}
+.widget-wx svg{width:42px;height:42px;flex:none}
+.wwx-t{font-size:30px;font-weight:400}
+.wwx-c{font-size:12.5px;opacity:.85}
+.wwx-hi{margin-left:auto;text-align:right;font-size:11.5px;opacity:.85;line-height:1.7}
+/* app grid */
+.agrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 4px}
+.aitem{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 2px;border-radius:20px;position:relative}
+.aitem:active .aicon{transform:scale(.88)}
+.aicon{width:58px;height:58px;border-radius:23px;display:flex;align-items:center;justify-content:center;flex:none;
+  transition:transform .18s var(--ease-spring);box-shadow:0 6px 16px -6px rgba(0,0,0,.35);position:relative;overflow:hidden}
+.aicon svg{width:55%;height:55%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18))}
+.alabel{font-size:11.5px;font-weight:500;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);max-width:80px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* dock + search */
+#dock-wrap{flex:none;padding:6px 20px 0}
+#dock{background:rgba(255,255,255,.15);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-radius:34px;padding:10px 14px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#dock .alabel{display:none}
+#home-search{flex:none;margin:12px 22px 0;height:48px;border-radius:26px;background:rgba(255,255,255,.16);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+  display:flex;align-items:center;gap:12px;padding:0 20px;color:rgba(255,255,255,.85);font-size:14px}
+#home-dots{flex:none;display:flex;gap:7px;justify-content:center;align-items:center;padding:14px 0 6px}
+#home-dots i{width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,.4);transition:all .3s}
+#home-dots i.on{width:20px;background:#fff}
+
+/* ============ App drawer ============ */
+#drawer{position:absolute;inset:0;z-index:180;display:none;flex-direction:column;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(34px);-webkit-backdrop-filter:blur(34px);color:var(--text);padding-top:54px}
+#drawer.on{display:flex}
+#drawer.dopening{animation:drawerIn .42s var(--ease-spring)}
+@keyframes drawerIn{from{transform:translateY(8%);opacity:0;border-radius:40px}to{transform:none;opacity:1;border-radius:0}}
+#drawer .dr-search{margin:8px 20px 12px;height:46px;border-radius:24px;background:var(--chip);display:flex;align-items:center;gap:12px;padding:0 18px;color:var(--text2)}
+#drawer .dr-search input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14.5px}
+#drawer .dr-grid{flex:1;overflow-y:auto;padding:4px 18px 60px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px 4px;align-content:start;overscroll-behavior:contain}
+#drawer .aitem .alabel{color:var(--text);text-shadow:none}
+#drawer .dr-pages{flex:none;display:flex;gap:6px;justify-content:center;padding:10px 0 8px}
+#drawer .dr-pages i{width:6px;height:6px;border-radius:3px;background:var(--toggle-off)}
+#drawer .dr-pages i.on{background:var(--blue)}
+
+/* ============ App layer ============ */
+#app-layer{position:absolute;inset:0;z-index:200;display:none;overflow:hidden;border-radius:0}
+#app-layer.on{display:block}
+#app-layer.opening .app-frame{animation:appOpen .42s var(--ease-spring)}
+#app-layer.closing .app-frame{animation:appClose .3s ease-in forwards}
+@keyframes appOpen{from{transform:scale(.24);opacity:0;border-radius:60px}to{transform:scale(1);opacity:1;border-radius:0}}
+@keyframes appClose{to{transform:scale(.24);opacity:0;border-radius:60px}}
+.app-frame{position:absolute;inset:0;background:var(--bg);color:var(--text);display:flex;flex-direction:column;overflow:hidden}
+.app-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.app-bar{flex:none;padding:58px 26px 10px;display:flex;align-items:flex-start;gap:10px}
+.app-bar h1{font-size:27px;font-weight:700;letter-spacing:-.4px;line-height:1.15}
+.app-bar .ab-sub{margin-top:6px;color:var(--text2);font-size:13px}
+.app-bar .ab-actions{margin-left:auto;display:flex;gap:6px;align-items:center;padding-top:4px}
+.iconbtn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex:none;transition:background .2s}
+.iconbtn:active{background:var(--chip)}
+.iconbtn svg{width:21px;height:21px}
+/* One UI card list */
+.oui-card{background:var(--card);border-radius:28px;margin:0 16px 14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.oui-item{display:flex;align-items:center;gap:16px;padding:15px 22px;font-size:15px;font-weight:500;position:relative;overflow:hidden;transition:background .2s}
+.oui-item:active{background:var(--divider)}
+.oui-item .oi-ic{width:26px;height:26px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.oui-item .oi-ic svg{width:22px;height:22px}
+.oui-item .oi-main{flex:1;min-width:0}
+.oui-item .oi-t{font-weight:500}
+.oui-item .oi-s{font-size:12.5px;color:var(--text2);margin-top:2px}
+.oui-item .oi-end{margin-left:auto;color:var(--text2);font-size:13px;display:flex;align-items:center;gap:8px}
+.oui-item .oi-end svg{width:17px;height:17px}
+.oui-sep{height:1px;background:var(--divider);margin-left:64px}
+.oui-head{font-size:13px;font-weight:700;color:var(--text2);padding:22px 32px 10px;letter-spacing:.2px}
+/* switch */
+.switch{width:44px;height:26px;border-radius:14px;background:var(--toggle-off);position:relative;flex:none;transition:background .25s;cursor:pointer}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .25s var(--ease-spring);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch.on{background:var(--blue)}
+.switch.on::after{transform:translateX(18px)}
+/* chips / segmented */
+.seg{display:flex;background:var(--chip);border-radius:20px;padding:4px;margin:4px 16px 14px;gap:4px}
+.seg button{flex:1;padding:10px 6px;border-radius:16px;font-size:13px;font-weight:600;color:var(--text2);transition:all .25s}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+/* slider */
+.oslider{margin:6px 22px 18px;position:relative;height:44px;border-radius:24px;background:var(--chip);overflow:hidden;cursor:pointer}
+.oslider .fill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,#7fb3f5,var(--blue))}
+.oslider .knob{position:absolute;top:4px;width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25);transform:translateX(-50%);left:0}
+.oslider .ico{position:absolute;top:50%;transform:translateY(-50%);left:14px;color:rgba(0,0,0,.5);z-index:2}
+.oslider .ico svg{width:19px;height:19px}
+
+/* ============ Navigation ============ */
+#navbar{position:absolute;left:0;right:0;bottom:0;height:calc(var(--nav-h) + 14px);z-index:310;display:none;align-items:flex-end;justify-content:center;padding-bottom:7px}
+#navbar.on{display:flex}
+#navbar.gestures{cursor:pointer}
+#navbar .gestbar{width:120px;height:5px;border-radius:3px;background:var(--nav-ink);opacity:.85;transition:width .25s var(--ease-out),opacity .2s}
+#navbar.gestures:active .gestbar{width:96px;opacity:1}
+#navbar .navbtns{display:none;gap:34px;align-items:center;padding-bottom:6px;color:var(--nav-ink)}
+#navbar.buttons .navbtns{display:flex}
+#navbar.buttons .gestbar{display:none}
+#navbar .navbtns button{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#navbar .navbtns button:active{background:var(--chip)}
+#navbar .navbtns svg{width:21px;height:21px}
+#navbar .recbtn svg{transform:rotate(90deg)}
+
+/* ============ Notification shade & quick panel ============ */
+#shade{position:absolute;inset:0;z-index:350;display:none;pointer-events:none}
+#shade.on{display:block;pointer-events:auto}
+#shade .sh-scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .3s}
+#shade.open .sh-scrim{opacity:1}
+#shade .sh-panel{position:absolute;top:0;left:0;right:0;bottom:0;transform:translateY(-100%);transition:transform .45s var(--ease-spring);
+  background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(36px);-webkit-backdrop-filter:blur(36px);color:var(--text);
+  display:flex;flex-direction:column;overflow:hidden;border-radius:0 0 44px 44px}
+#shade.open .sh-panel{transform:none}
+#shade.dragging .sh-panel{transition:none}
+.sh-head{flex:none;display:flex;align-items:center;padding:56px 26px 8px;font-size:13px;font-weight:600;color:var(--text2)}
+.sh-head .sp{margin-left:auto;display:flex;gap:4px}
+.sh-head .iconbtn{width:36px;height:36px}
+.sh-head .iconbtn svg{width:19px;height:19px}
+.sh-body{flex:1;overflow-y:auto;padding:8px 14px calc(30px + var(--nav-h));overscroll-behavior:contain}
+/* notifications */
+.sh-notif{background:var(--card);border-radius:26px;padding:14px 18px;display:flex;gap:13px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);animation:notifIn .45s var(--ease-spring)}
+.sh-notif .ni{width:30px;height:30px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center}
+.sh-notif .ni svg{width:17px;height:17px}
+.sh-notif .nt{font-size:14px;font-weight:700}
+.sh-notif .nm{font-size:13px;color:var(--text2);margin-top:2px;line-height:1.45}
+.sh-notif .nwhen{margin-left:auto;font-size:11px;color:var(--text2);flex:none}
+/* quick panel */
+#qp{background:var(--card);border-radius:30px;padding:18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.qp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.qbtn{aspect-ratio:1;border-radius:22px;background:var(--chip);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  font-size:10.5px;font-weight:600;color:var(--text2);position:relative;overflow:hidden;transition:background .25s,color .25s,transform .15s}
+.qbtn:active{transform:scale(.93)}
+.qbtn svg{width:21px;height:21px}
+.qbtn.on{background:var(--blue);color:#fff}
+.qbtn .qsub{font-size:9px;font-weight:500;opacity:.8}
+.qp-bright{margin:16px 2px 4px}
+/* media player */
+#qp-media{background:linear-gradient(135deg,#3d2a68,#1d3a6e);border-radius:26px;padding:16px;color:#fff;display:flex;gap:14px;align-items:center;margin-top:14px;position:relative;overflow:hidden}
+#qp-media .mq-art{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#ff9a62,#d5458b);flex:none;position:relative;overflow:hidden}
+#qp-media .mq-t{font-size:14px;font-weight:700}
+#qp-media .mq-a{font-size:12px;opacity:.75;margin-top:2px}
+#qp-media .mq-ctl{margin-left:auto;display:flex;align-items:center;gap:6px}
+#qp-media .iconbtn{color:#fff}
+#qp-media .iconbtn:active{background:rgba(255,255,255,.15)}
+.wave{display:flex;align-items:flex-end;gap:2.5px;height:22px;margin-top:8px}
+.wave i{width:3px;border-radius:2px;background:rgba(255,255,255,.85);animation:wv 1s ease-in-out infinite}
+@keyframes wv{0%,100%{height:5px}50%{height:20px}}
+.sh-handle{flex:none;width:44px;height:4px;border-radius:2px;background:var(--toggle-off);margin:8px auto 10px;opacity:.6}
+
+/* ============ Recents ============ */
+#recents{position:absolute;inset:0;z-index:330;display:none;flex-direction:column;background:color-mix(in srgb,var(--bg) 82%,transparent);
+  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);color:var(--text);padding-top:70px}
+#recents.on{display:flex}
+#recents .rc-title{padding:0 30px 16px;font-size:22px;font-weight:700}
+#recents .rc-row{flex:1;display:flex;gap:16px;padding:6px 26px 20px;overflow-x:auto;align-items:center;overscroll-behavior:contain}
+.rc-card{flex:none;width:62%;height:74%;background:var(--card);border-radius:30px;overflow:hidden;position:relative;box-shadow:0 18px 40px -18px rgba(0,0,0,.45);
+  display:flex;flex-direction:column;animation:notifIn .5s var(--ease-spring)}
+.rc-card .rc-head{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:13px;font-weight:600;border-bottom:1px solid var(--divider)}
+.rc-card .rc-head .aicon{width:26px;height:26px;border-radius:9px;box-shadow:none}
+.rc-card .rc-head .aicon svg{width:60%;height:60%}
+.rc-card .rc-body{flex:1;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:13px;font-weight:500;position:relative;overflow:hidden}
+.rc-card .rc-body .aicon{width:64px;height:64px;border-radius:26px;box-shadow:0 14px 30px -12px rgba(0,0,0,.4)}
+.rc-card .rc-x{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;z-index:2}
+.rc-card .rc-x svg{width:15px;height:15px}
+.rc-empty{margin:auto;text-align:center;color:var(--text2);font-size:14px}
+#recents .rc-actions{flex:none;display:flex;justify-content:center;gap:14px;padding:8px 0 40px}
+#recents .rc-actions button{padding:12px 26px;border-radius:24px;background:var(--card);font-size:13.5px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+
+/* ============ Ripple ============ */
+.rp{position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;background:rgba(140,150,170,.28);transform:scale(0);pointer-events:none;
+  animation:ripple .55s var(--ease-out) forwards}
+@keyframes ripple{to{transform:scale(2.6);opacity:0}}
+
+/* ============ Toast / volume / power menu ============ */
+#toast{position:absolute;left:50%;bottom:calc(90px + var(--nav-h));transform:translateX(-50%) translateY(20px);z-index:520;
+  background:rgba(18,20,26,.92);color:#fff;font-size:13px;font-weight:500;padding:12px 22px;border-radius:24px;opacity:0;
+  transition:all .35s var(--ease-spring);pointer-events:none;max-width:80%;text-align:center;backdrop-filter:blur(10px)}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#volhud{position:absolute;left:8px;top:120px;z-index:530;width:40px;border-radius:22px;background:rgba(20,22,28,.85);backdrop-filter:blur(20px);
+  padding:14px 0;display:none;flex-direction:column;align-items:center;gap:12px}
+#volhud.on{display:flex;animation:notifIn .3s var(--ease-spring)}
+#volhud .vtrack{flex:1;width:5px;border-radius:3px;background:rgba(255,255,255,.25);position:relative;min-height:120px}
+#volhud .vfill{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:3px}
+#volhud svg{width:19px;height:19px;color:#fff}
+#powermenu{position:absolute;inset:0;z-index:540;display:none;align-items:center;justify-content:center;background:rgba(5,8,14,.55);backdrop-filter:blur(16px)}
+#powermenu.on{display:flex}
+#powermenu .pm-card{background:var(--card);border-radius:34px;padding:26px 30px;display:flex;gap:22px;animation:notifIn .35s var(--ease-spring)}
+#powermenu button{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:var(--text);width:74px}
+#powermenu button .pmi{width:56px;height:56px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center}
+#powermenu button .pmi svg{width:24px;height:24px}
+#powermenu button:active .pmi{transform:scale(.9)}
+
+/* ============ App-specific styles ============ */
+/* Settings profile */
+.set-me{display:flex;align-items:center;gap:16px;padding:18px 22px}
+.set-me .avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#5b8def,#9b6ff0);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff}
+/* Phone dialer */
+.dial-out{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.dial-num{font-size:34px;font-weight:400;letter-spacing:1px;min-height:46px}
+.dial-sub{font-size:12.5px;color:var(--text2)}
+.dialpad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center;padding:0 0 10px}
+.dialpad button{width:72px;height:58px;border-radius:20px;background:var(--card);font-size:23px;position:relative;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.05)}
+.dialpad button small{display:block;font-size:9px;font-weight:700;color:var(--text2);letter-spacing:1.2px}
+.dialpad button:active{background:var(--chip);transform:scale(.94)}
+.dial-cta{display:flex;justify-content:center;padding:6px 0 20px;position:relative}
+.dial-cta .callb{width:70px;height:70px;border-radius:50%;background:linear-gradient(160deg,#2fd06a,#17a950);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -8px rgba(23,169,80,.6)}
+.dial-cta .callb:active{transform:scale(.92)}
+.dial-cta .callb svg{width:30px;height:30px}
+.dial-cta .delb{position:absolute;right:44px;top:16px;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+/* call screen */
+#callscreen{position:absolute;inset:0;z-index:560;background:linear-gradient(170deg,#12203a,#0a1322);color:#fff;display:none;flex-direction:column;align-items:center;padding-top:110px}
+#callscreen.on{display:flex;animation:appOpen .4s var(--ease-spring)}
+#callscreen .cs-av{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#5b8def,#9b6ff0);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700}
+#callscreen .cs-n{font-size:27px;font-weight:600;margin-top:22px}
+#callscreen .cs-s{font-size:14px;opacity:.7;margin-top:8px;letter-spacing:.4px}
+#callscreen .cs-actions{margin-top:auto;display:flex;gap:38px;padding-bottom:76px}
+#callscreen .cs-actions button{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:12px;opacity:.9}
+#callscreen .cs-actions .pmi{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center}
+#callscreen .cs-actions .end{background:#e5484d}
+#callscreen .cs-actions svg{width:26px;height:26px}
+/* Messages */
+.chat{display:flex;flex-direction:column;gap:8px;padding:6px 18px 120px}
+.bub{max-width:76%;padding:11px 16px;font-size:14.5px;line-height:1.45;border-radius:22px;animation:bubIn .3s var(--ease-spring)}
+.bub.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:8px}
+.bub.them{align-self:flex-start;background:var(--card);border-bottom-left-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.bub .bt{display:block;font-size:10px;opacity:.65;margin-top:4px;text-align:right}
+@keyframes bubIn{from{transform:translateY(10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.typing{display:flex;gap:4px;align-items:center;padding:14px 18px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--text2);animation:tyb 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes tyb{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.chat-input{position:absolute;left:0;right:0;bottom:0;background:var(--bg);padding:10px 16px calc(16px + var(--nav-h));display:flex;gap:10px;align-items:center;border-top:1px solid var(--divider)}
+.chat-input input{flex:1;background:var(--card);border:none;outline:none;border-radius:24px;padding:13px 20px;font-size:14.5px}
+.chat-input .sendb{width:46px;height:46px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}
+.chat-input .sendb svg{width:20px;height:20px;color:#fff}
+/* Gallery */
+.gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 0 80px}
+.gal-grid .ph{aspect-ratio:1;position:relative;overflow:hidden;background:var(--chip)}
+.gal-grid .ph img,.gal-grid .ph canvas{width:100%;height:100%;object-fit:cover}
+.gal-grid .ph:active{transform:scale(.97)}
+#photoview{position:absolute;inset:0;z-index:560;background:#000;display:none;align-items:center;justify-content:center;flex-direction:column}
+#photoview.on{display:flex;animation:appOpen .35s var(--ease-spring)}
+#photoview img,#photoview canvas{max-width:100%;max-height:86%}
+#photoview .pv-bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:6px;padding:52px 14px 10px;color:#fff}
+/* Camera */
+.cam-wrap{flex:1;position:relative;overflow:hidden;background:#000}
+.cam-scene{position:absolute;inset:0;transition:filter .5s}
+.cam-ui{position:absolute;inset:0;display:flex;flex-direction:column;pointer-events:none}
+.cam-ui > *{pointer-events:auto}
+.cam-top{display:flex;justify-content:space-between;padding:56px 22px 0;color:#fff}
+.cam-modes{display:flex;gap:22px;justify-content:center;color:rgba(255,255,255,.75);font-size:13px;font-weight:600;padding-bottom:14px;margin-top:auto}
+.cam-modes span.on{color:#ffd75e}
+.cam-bottom{margin-top:auto;display:flex;align-items:center;justify-content:space-around;padding:18px 30px 30px}
+.shutter{width:76px;height:76px;border-radius:50%;border:4px solid #fff;display:flex;align-items:center;justify-content:center}
+.shutter::after{content:'';width:60px;height:60px;border-radius:50%;background:#fff;transition:transform .15s}
+.shutter:active::after{transform:scale(.82)}
+.cam-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:5}
+.cam-flash.go{animation:camflash .35s ease-out}
+@keyframes camflash{0%{opacity:.95}100%{opacity:0}}
+/* Calculator */
+.calc-out{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;padding:10px 28px 16px;gap:4px}
+.calc-hist{color:var(--text2);font-size:16px;min-height:24px}
+.calc-cur{font-size:52px;font-weight:300;letter-spacing:-1px;word-break:break-all;text-align:right}
+.calc-grid{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 18px calc(20px + var(--nav-h))}
+.calc-grid button{aspect-ratio:1.05;border-radius:26px;font-size:22px;background:var(--card);position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.calc-grid button.op{background:var(--chip);color:var(--blue);font-weight:600}
+.calc-grid button.eq{background:var(--blue);color:#fff}
+.calc-grid button:active{transform:scale(.94)}
+/* Clock */
+.clock-face{display:flex;flex-direction:column;align-items:center;padding:20px 0 8px}
+.clock-face .cf-t{font-size:58px;font-weight:200;letter-spacing:-1px}
+.clock-face .cf-d{color:var(--text2);font-size:14px;margin-top:4px}
+.alarm-row{display:flex;align-items:center;gap:14px;padding:16px 22px}
+.alarm-row .at{font-size:26px;font-weight:500}
+.alarm-row .al{font-size:12.5px;color:var(--text2);margin-top:2px}
+.alarm-row .switch{margin-left:auto}
+/* Weather */
+.wx-hero{display:flex;flex-direction:column;align-items:center;color:#fff;padding:16px 0 8px}
+.wx-hero .wt{font-size:78px;font-weight:200}
+.wx-hero .wc{font-size:16px;opacity:.85}
+.wx-hero .wl{font-size:13.5px;opacity:.7;margin-top:6px}
+.wx-hours{display:flex;gap:4px;overflow-x:auto;padding:12px 4px}
+.wx-hours .wh{flex:none;width:64px;text-align:center;padding:12px 0;border-radius:20px;color:#fff;font-size:12px}
+.wx-days{padding:0 4px 20px}
+/* Notes */
+.note-row{display:flex;align-items:center;gap:14px;padding:16px 22px}
+.note-row .nprev{font-size:12.5px;color:var(--text2);margin-top:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note-edit{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;color:var(--text);z-index:2}
+.note-edit.on{display:flex;animation:appOpen .3s var(--ease-spring)}
+.note-edit textarea{flex:1;background:none;border:none;outline:none;resize:none;padding:10px 28px 30px;font-size:15px;line-height:1.7}
+.note-edit input{background:none;border:none;outline:none;padding:6px 28px 10px;font-size:22px;font-weight:700}
+/* Browser */
+.br-bar{display:flex;gap:8px;align-items:center;padding:8px 14px;background:var(--bg);border-bottom:1px solid var(--divider)}
+.br-bar .url{flex:1;background:var(--chip);border-radius:20px;padding:10px 18px;font-size:13.5px;color:var(--text2);display:flex;align-items:center;gap:8px;overflow:hidden;white-space:nowrap}
+.br-dial{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 22px}
+.br-tile{display:flex;flex-direction:column;align-items:center;gap:9px;font-size:11.5px;font-weight:500;color:var(--text)}
+.br-tile .bt-ic{width:58px;height:58px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px rgba(0,0,0,.2)}
+.br-tile .bt-ic svg{width:28px;height:28px}
+/* Calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:6px 26px 14px;font-size:16px;font-weight:700}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;gap:2px;padding:0 14px 20px}
+.cal-grid .cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:50%;position:relative;font-weight:500}
+.cal-grid .cd.dim{color:var(--text2);opacity:.45}
+.cal-grid .cd.today{background:var(--blue);color:#fff;font-weight:700}
+.cal-grid .cd .evdot{position:absolute;bottom:7px;width:4px;height:4px;border-radius:2px;background:var(--blue)}
+.cal-grid .dow{font-size:11px;font-weight:700;color:var(--text2);aspect-ratio:auto;padding-bottom:6px}
+
+/* ============ DeX ============ */
+#dex{position:fixed;inset:0;z-index:900;background:#0d1220;display:none;flex-direction:column;overflow:hidden}
+#dex.on{display:flex;animation:dexIn .55s var(--ease-spring)}
+@keyframes dexIn{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:none}}
+#dex-wall{position:absolute;inset:0;background:radial-gradient(140% 120% at 20% 10%,#274a8a 0%,#141b33 45%,#0a0e1d 100%);transition:background .5s}
+#dex-wall::after{content:'';position:absolute;inset:0;background:radial-gradient(60% 50% at 80% 85%,rgba(91,141,239,.25),transparent 70%)}
+#dex-top{position:relative;z-index:5;height:34px;display:flex;align-items:center;padding:0 18px;color:rgba(255,255,255,.85);font-size:12px;gap:18px}
+#dex-top .dt-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+#dex-top .iconbtn{width:30px;height:30px;color:rgba(255,255,255,.85)}
+#dex-top .iconbtn svg{width:16px;height:16px}
+#dex-top .iconbtn:active{background:rgba(255,255,255,.12)}
+#dex-notice{position:absolute;top:34px;right:12px;z-index:40;width:330px;background:rgba(22,26,38,.92);backdrop-filter:blur(20px);border-radius:20px;padding:10px;
+  color:#fff;transform:translateY(-12px);opacity:0;pointer-events:none;transition:all .3s var(--ease-spring);box-shadow:0 20px 50px -20px rgba(0,0,0,.6)}
+#dex-notice.on{transform:none;opacity:1}
+#dex-windows{position:absolute;inset:34px 0 0 0;z-index:1}
+.dexwin{position:absolute;background:var(--card);border-radius:16px;box-shadow:0 30px 70px -24px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.07);
+  display:flex;flex-direction:column;overflow:hidden;min-width:320px;min-height:220px;animation:winIn .4s var(--ease-spring);color:var(--text)}
+@keyframes winIn{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.dexwin.min{display:none}
+.dexwin .dw-head{flex:none;height:40px;display:flex;align-items:center;gap:10px;padding:0 10px;background:var(--card2);cursor:grab;user-select:none;touch-action:none}
+.dexwin .dw-head:active{cursor:grabbing}
+.dexwin .dw-head .aicon{width:22px;height:22px;border-radius:8px;box-shadow:none}
+.dexwin .dw-head .aicon svg{width:60%;height:60%}
+.dexwin .dw-head .dw-t{font-size:13px;font-weight:600}
+.dexwin .dw-ctl{margin-left:auto;display:flex;gap:2px}
+.dexwin .dw-ctl button{width:34px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.dexwin .dw-ctl button:hover{background:var(--chip)}
+.dexwin .dw-ctl button.x:hover{background:#e5484d;color:#fff}
+.dexwin .dw-ctl svg{width:13px;height:13px}
+.dexwin .dw-body{flex:1;overflow:auto;background:var(--bg);position:relative}
+.dexwin .dw-body .app-frame{position:absolute;inset:0}
+.dexwin .dw-rs{position:absolute;right:0;bottom:0;width:20px;height:20px;cursor:nwse-resize;touch-action:none}
+.dexwin.max{left:8px !important;top:8px !important;width:calc(100% - 16px) !important;height:calc(100% - 16px) !important;border-radius:12px}
+#dex-taskbar{position:relative;z-index:10;height:64px;display:flex;align-items:center;gap:8px;padding:0 14px;margin-top:auto;
+  background:rgba(16,20,34,.72);backdrop-filter:blur(30px);border-top:1px solid rgba(255,255,255,.08)}
+#dex-taskbar .tb-apps{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.9)}
+#dex-taskbar .tb-apps:active{background:rgba(255,255,255,.12)}
+#dex-taskbar .tb-apps svg{width:22px;height:22px}
+#dex-taskbar .tb-sep{width:1px;height:30px;background:rgba(255,255,255,.12);margin:0 6px}
+#dex-taskbar .tb-pin{display:flex;gap:8px}
+#dex-taskbar .tbn{width:46px;height:46px;border-radius:14px;position:relative;transition:transform .2s var(--ease-spring)}
+#dex-taskbar .tbn:active{transform:scale(.88)}
+#dex-taskbar .tbn .aicon{width:100%;height:100%}
+#dex-taskbar .tbn .rundot{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:14px;height:3px;border-radius:2px;background:#8ab4f8;opacity:0;transition:opacity .25s}
+#dex-taskbar .tbn.run .rundot{opacity:1}
+#dex-taskbar .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.85);font-size:12.5px;font-weight:500}
+#dex-taskbar .tb-right .iconbtn{color:rgba(255,255,255,.85)}
+#dex-taskbar .tb-right .iconbtn:active{background:rgba(255,255,255,.12)}
+#dex-taskbar .dexquit{padding:9px 16px;border-radius:12px;background:rgba(255,255,255,.1);font-size:12.5px;font-weight:600;color:#fff}
+#dex-start{position:absolute;left:14px;bottom:78px;z-index:30;width:560px;max-width:calc(100vw - 28px);max-height:min(560px,calc(100vh - 110px));
+  background:rgba(22,26,38,.9);backdrop-filter:blur(30px);border-radius:24px;padding:22px;color:#fff;display:none;flex-direction:column;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+#dex-start.on{display:flex;animation:winIn .3s var(--ease-spring)}
+#dex-start .ds-search{background:rgba(255,255,255,.1);border-radius:16px;padding:11px 18px;font-size:14px;color:rgba(255,255,255,.8);margin-bottom:18px}
+#dex-start .ds-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;overflow-y:auto;padding:2px}
+#dex-start .ds-app{display:flex;flex-direction:column;align-items:center;gap:9px;font-size:11.5px;color:rgba(255,255,255,.85)}
+#dex-start .ds-app:active .aicon{transform:scale(.9)}
+#dex-start .aicon{width:52px;height:52px}
+#dex-exit-toast{position:fixed;left:50%;top:26px;transform:translateX(-50%);z-index:950;background:rgba(22,26,38,.92);color:#fff;
+  padding:13px 24px;border-radius:16px;font-size:13.5px;backdrop-filter:blur(10px);box-shadow:0 10px 30px -10px rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .3s}
+#dex-exit-toast.on{opacity:1}
+
+/* ---- boot progress ---- */
+#boot .bar{position:absolute;bottom:72px;left:50%;transform:translateX(-50%);width:132px;height:3px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden}
+#boot .bar i{display:block;height:100%;width:0;background:#fff;border-radius:2px;animation:bootbar 2.1s .3s ease-in-out forwards}
+@keyframes bootbar{0%{width:0}55%{width:62%}100%{width:100%}}
+
+/* ---- home stagger & lock entrance ---- */
+#home.unlocking .hpage > *{animation:homeItem .55s var(--ease-spring) backwards}
+#home.unlocking .hpage > *:nth-child(1){animation-delay:.05s}
+#home.unlocking .hpage > *:nth-child(2){animation-delay:.11s}
+#home.unlocking .hpage > *:nth-child(3){animation-delay:.17s}
+#home.unlocking #home-dots,#home.unlocking #home-search,#home.unlocking #dock-wrap{animation:homeItem .55s var(--ease-spring) backwards}
+#home.unlocking #home-dots{animation-delay:.2s}
+#home.unlocking #home-search{animation-delay:.25s}
+#home.unlocking #dock-wrap{animation-delay:.3s}
+@keyframes homeItem{from{transform:translateY(28px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+#lock.on .lk-clock{animation:lkIn .65s var(--ease-spring) backwards}
+#lock.on .lk-date{animation:lkIn .65s .09s var(--ease-spring) backwards}
+#lock.on .lk-wx{animation:lkIn .65s .14s var(--ease-spring) backwards}
+#lock.on .lk-notifs{animation:lkIn .65s .2s var(--ease-spring) backwards}
+@keyframes lkIn{from{transform:translateY(-20px);opacity:0}to{transform:none;opacity:1}}
+#wallpaper{transition:background .5s var(--ease-out),transform .45s var(--ease-out)}
+
+/* ---- lock clock styles ---- */
+#lock[data-clock=slim] .lk-clock{font-weight:200;font-size:92px;letter-spacing:-4px}
+#lock[data-clock=bold] .lk-clock{font-weight:700;letter-spacing:1px}
+#lock[data-clock=bold] .lk-clock b{font-weight:800}
+
+/* ---- Play Store ---- */
+.ps-hero{margin:6px 16px 16px;border-radius:30px;padding:26px 24px;color:#fff;position:relative;overflow:hidden}
+.ps-hero .ph-k{font-size:11px;font-weight:700;letter-spacing:1.5px;opacity:.8}
+.ps-hero .ph-t{font-size:23px;font-weight:800;margin-top:8px;line-height:1.2}
+.ps-hero .ph-s{font-size:13px;opacity:.85;margin-top:6px;line-height:1.5}
+.ps-row-title{display:flex;align-items:baseline;gap:8px;padding:6px 30px 12px}
+.ps-row-title b{font-size:16.5px;font-weight:700}
+.ps-row-title span{font-size:11.5px;color:var(--text2)}
+.ps-scroll{display:flex;gap:14px;overflow-x:auto;padding:2px 26px 18px;scrollbar-width:none}
+.ps-scroll::-webkit-scrollbar{display:none}
+.ps-card{flex:none;width:104px;display:flex;flex-direction:column;gap:8px}
+.ps-card .aicon{width:60px;height:60px}
+.ps-card .psn{font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-card .psr{font-size:10.5px;color:var(--text2)}
+.ps-list .oui-item .rank{width:30px;font-weight:800;color:var(--text2);font-size:15px}
+.ps-cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:4px 16px 20px}
+.ps-cat{border-radius:24px;padding:18px;color:#fff;font-weight:700;font-size:15px;position:relative;overflow:hidden;min-height:86px;display:flex;align-items:flex-end}
+.ps-cat svg{position:absolute;right:12px;top:12px;width:26px;height:26px;opacity:.85}
+.ps-meta{display:flex;gap:18px;padding:16px 30px 4px;color:var(--text2);font-size:11.5px}
+.ps-meta div{flex:1;text-align:center}
+.ps-meta b{display:block;color:var(--text);font-size:14px;font-weight:700;margin-bottom:3px}
+.ps-shots{display:flex;gap:10px;overflow-x:auto;padding:14px 26px 6px;scrollbar-width:none}
+.ps-shots::-webkit-scrollbar{display:none}
+.ps-shot{flex:none;width:150px;height:250px;border-radius:18px;position:relative;overflow:hidden}
+.ps-install{margin:14px 30px 0;height:48px;border-radius:26px;background:var(--blue);color:#fff;font-size:15px;font-weight:700;position:relative;overflow:hidden}
+.ps-install .fillp{position:absolute;inset:0;width:0;background:rgba(255,255,255,.22);transition:width .2s linear}
+.ps-install span{position:relative}
+.ps-install.done{background:var(--chip);color:var(--text)}
+.ps-detail{position:absolute;inset:0;background:var(--bg);z-index:3;display:flex;flex-direction:column;animation:suIn .32s var(--ease-spring)}
+.ps-head-card{display:flex;align-items:center;gap:16px;padding:8px 28px 16px}
+.ps-head-card .aicon{width:74px;height:74px;border-radius:26px}
+.ps-head-card .psd{color:var(--text2);font-size:12px;margin-top:3px}
+.ps-desc{padding:20px 30px;color:var(--text2);font-size:13.5px;line-height:1.7}
+.installed-badge{color:var(--blue);font-weight:700;font-size:13px}
+#statusbar .pct{font-size:10.5px;margin-right:2px}
+.dw-bars{display:flex;align-items:flex-end;gap:8px;height:120px;padding:18px 30px 6px}
+.dw-bars .db{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+.dw-bars .db i{width:100%;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--blue),color-mix(in srgb,var(--blue) 55%,transparent));transform-origin:bottom;animation:dbGrow .8s var(--ease-spring) backwards}
+@keyframes dbGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.dw-bars .db span{font-size:10px;color:var(--text2)}
+.accent-chips{display:flex;gap:12px;padding:16px 30px 4px}
+.accent-chip{width:42px;height:42px;border-radius:50%;position:relative;flex:none;transition:transform .2s var(--ease-spring)}
+.accent-chip:active{transform:scale(.88)}
+.accent-chip.on::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2.5px solid var(--text)}
+.sh-notif{touch-action:pan-y}
+.sh-notif.swiping{transition:none;position:relative;z-index:2}
+.sh-notif.dismiss{animation:notifOut .3s ease-in forwards}
+@keyframes notifOut{to{transform:translateX(110%);opacity:0;height:0;margin:0;padding-top:0;padding-bottom:0}}
+
+@media (max-width:760px){
+  #stage-hint{display:none}
+  #stage{gap:0}
+  #phone-wrap{height:100dvh;aspect-ratio:auto;width:100vw}
+  #phone{border-radius:0;padding:0;background:none;box-shadow:none}
+  #phone::before,#phone::after{display:none}
+  #screen{inset:0;border-radius:0}
+  #punch{display:none}
+}
+</style>
+</head>
+<body>
+<div id="stage-hint">
+  <b>One UI 9</b> — web edition<br>
+  Swipe up from the bottom to go home<br>
+  Swipe up on home for the app drawer<br>
+  Swipe down for Quick Panel<br>
+  Side keys: power &amp; volume<br>
+  Try the <b>Play Store</b> — 100+ apps<br>
+  Toggle <b>Samsung DeX</b> in Quick Panel
+</div>
+<div id="stage">
+  <div id="phone-wrap">
+    <div id="phone" data-theme="light">
+      <div id="screen">
+        <div id="wallpaper"></div>
+        <div id="statusbar"><div class="sbi" id="sb-time">9:41</div><div class="sbi" id="sb-icons"></div></div>
+        <div id="home">
+          <div id="home-pages">
+            <div class="hpage" id="hp1"></div>
+            <div class="hpage" id="hp2"></div>
+          </div>
+          <div id="home-dots"><i class="on"></i><i></i></div>
+          <div id="home-search"></div>
+          <div id="dock-wrap"><div id="dock"></div></div>
+        </div>
+        <div id="drawer">
+          <div class="dr-search" id="dr-search"></div>
+          <div class="dr-grid" id="dr-grid"></div>
+          <div class="dr-pages"><i class="on"></i></div>
+        </div>
+        <div id="app-layer"></div>
+        <div id="shade">
+          <div class="sh-scrim"></div>
+          <div class="sh-panel">
+            <div class="sh-head"><span id="sh-date"></span><div class="sp" id="sh-head-btns"></div></div>
+            <div class="sh-body" id="sh-body"></div>
+            <div class="sh-handle"></div>
+          </div>
+        </div>
+        <div id="recents"><div class="rc-title">Recent apps</div><div class="rc-row" id="rc-row"></div><div class="rc-actions"><button id="rc-close-all">Close all</button></div></div>
+        <div id="navbar" class="gestures"><div class="gestbar"></div>
+          <div class="navbtns">
+            <button id="nb-back" aria-label="Back"></button>
+            <button id="nb-home" aria-label="Home"></button>
+            <button class="recbtn" id="nb-recents" aria-label="Recents"></button>
+          </div>
+        </div>
+        <div id="lock"></div>
+        <div id="aod"><div class="a-t">9:41</div><div class="a-d"></div></div>
+        <div id="boot"><div class="slogo">SAMSUNG</div><div class="sub">GALAXY ONE UI 9</div><div class="bar"><i></i></div><div class="ver">One UI 9.0 · Android 17</div></div>
+        <div id="setup"></div>
+        <div id="volhud"></div>
+        <div id="powermenu"></div>
+        <div id="callscreen"></div>
+        <div id="photoview"></div>
+        <div id="toast"></div>
+        <div id="punch"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="dex">
+  <div id="dex-wall"></div>
+  <div id="dex-top"><span id="dex-conn">DeX · Connected</span><div class="dt-right" id="dex-top-btns"></div></div>
+  <div id="dex-notice"></div>
+  <div id="dex-windows"></div>
+  <div id="dex-taskbar">
+    <button class="tb-apps" id="dex-apps-btn" aria-label="Apps"></button>
+    <div class="tb-sep"></div>
+    <div class="tb-pin" id="dex-pin"></div>
+    <div class="tb-right" id="dex-right"></div>
+  </div>
+  <div id="dex-start"><div class="ds-search" id="ds-search">Search apps…</div><div class="ds-grid" id="ds-grid"></div></div>
+  <div id="dex-exit-toast">Samsung DeX — press Exit DeX to return to your phone</div>
+</div>
+<script>
+/* ============================================================
+   One UI 9 — web edition. Single-file experience.
+   ============================================================ */
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---------- safe storage (sandbox-proof) ---------- */
+const store = (() => {
+  let mem = {};
+  let ok = false;
+  try { const ls = window['local' + 'Storage']; ls.setItem('__t', '1'); ls.removeItem('__t'); ok = true; mem._ls = ls; } catch (e) {}
+  return {
+    get(k, d) { try { const v = ok ? mem._ls && mem._ls.getItem('oui9_' + k) : mem[k]; return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { const s = JSON.stringify(v); if (ok && mem._ls) mem._ls.setItem('oui9_' + k, s); else mem[k] = s; } catch (e) {} }
+  };
+})();
+
+/* ---------- state ---------- */
+const state = {
+  booted: false, setupDone: store.get('setupDone', false),
+  theme: store.get('theme', 'light'), wallpaper: store.get('wallpaper', 'aurora'),
+  navMode: store.get('navMode', 'gestures'), pin: store.get('pin', ''),
+  wifi: store.get('wifi', true), bt: store.get('bt', false), sound: true, airplane: false,
+  brightness: 0.85, volume: 0.6, dex: false,
+  accent: store.get('accent', 'blue'), eyeComfort: false, batteryPct: store.get('batteryPct', true),
+  clockStyle: store.get('clockStyle', 'default'), installed: store.get('installed', []),
+  touchSounds: store.get('touchSounds', true), soundMode: store.get('soundMode', 'sound'),
+  dnd: store.get('dnd', false), autoRotate: store.get('autoRotate', true), aod: store.get('aod', true),
+  powerSaving: false, notifPrefs: store.get('notifPrefs', {}),
+  notifs: [], recentApps: [], photos: store.get('photos', []),
+  notes: store.get('notes', [
+    { t: 'Welcome to One UI 9', b: 'This note is synced with Samsung Cloud.\n\nTry:\n• Swipe up from the bottom to go home\n• Pull down the Quick Panel\n• Toggle Samsung DeX for a desktop experience', d: Date.now() - 86400000 }
+  ]),
+  alarms: store.get('alaros', undefined) || store.get('alarms', [
+    { t: '7:00 AM', l: 'Wake up · Mon–Fri', on: true }, { t: '9:30 AM', l: 'Standup meeting', on: false }
+  ]),
+};
+const save = () => {
+  store.set('setupDone', state.setupDone); store.set('theme', state.theme);
+  store.set('wallpaper', state.wallpaper); store.set('navMode', state.navMode);
+  store.set('pin', state.pin); store.set('wifi', state.wifi); store.set('bt', state.bt);
+  store.set('accent', state.accent); store.set('batteryPct', state.batteryPct);
+  store.set('clockStyle', state.clockStyle); store.set('installed', state.installed.slice(0, 60));
+  store.set('touchSounds', state.touchSounds); store.set('soundMode', state.soundMode);
+  store.set('dnd', state.dnd); store.set('autoRotate', state.autoRotate); store.set('aod', state.aod);
+  store.set('notifPrefs', state.notifPrefs);
+  store.set('photos', state.photos.slice(0, 24)); store.set('notes', state.notes); store.set('alarms', state.alarms);
+};
+
+/* ---------- accent colors ---------- */
+const ACCENTS = {
+  blue: { c: '#1b6ef3', p: '#1257c9' }, violet: { c: '#7c5cff', p: '#6039e8' },
+  teal: { c: '#0aa6a8', p: '#07807f' }, green: { c: '#0e9f5a', p: '#0a7a42' },
+  amber: { c: '#e08700', p: '#b56c00' }, rose: { c: '#e0527d', p: '#b83a61' },
+};
+function applyAccent() {
+  const a = ACCENTS[state.accent] || ACCENTS.blue;
+  ['#phone', '#dex'].forEach(s => {
+    const e = $(s); if (!e) return;
+    e.style.setProperty('--blue', a.c); e.style.setProperty('--blue-press', a.p);
+  });
+}
+
+/* ---------- wallpapers ---------- */
+const WALLPAPERS = {
+  aurora: { css: 'radial-gradient(90% 70% at 15% 10%,#3b5bdb 0%,transparent 55%),radial-gradient(80% 70% at 90% 20%,#7048e8 0%,transparent 50%),radial-gradient(100% 80% at 60% 100%,#0b7285 0%,transparent 60%),linear-gradient(180deg,#101533,#0a0d1f)', dex: 'radial-gradient(140% 120% at 20% 10%,#274a8a 0%,#141b33 45%,#0a0e1d 100%)' },
+  sunset: { css: 'radial-gradient(90% 70% at 80% 10%,#ff922b 0%,transparent 55%),radial-gradient(80% 70% at 10% 30%,#e64980 0%,transparent 50%),radial-gradient(100% 80% at 50% 100%,#5f3dc4 0%,transparent 65%),linear-gradient(180deg,#331a2e,#160b1c)', dex: 'radial-gradient(140% 120% at 75% 15%,#a8552e 0%,#3b1d33 45%,#170b18 100%)' },
+  forest: { css: 'radial-gradient(90% 70% at 20% 15%,#2b8a3e 0%,transparent 55%),radial-gradient(80% 70% at 85% 35%,#0ca678 0%,transparent 50%),radial-gradient(100% 80% at 50% 100%,#1864ab 0%,transparent 60%),linear-gradient(180deg,#0f2417,#08120d)', dex: 'radial-gradient(140% 120% at 25% 15%,#1d5c33 0%,#12291c 45%,#08120d 100%)' },
+  mono: { css: 'radial-gradient(100% 80% at 50% 0%,#3a3f4a 0%,transparent 60%),linear-gradient(180deg,#191c24,#0b0d12)', dex: 'radial-gradient(140% 120% at 50% 5%,#3a3f4a 0%,#15181f 45%,#0a0c10 100%)' },
+};
+function applyWallpaper() {
+  $('#wallpaper').style.background = WALLPAPERS[state.wallpaper].css;
+  $('#wallpaper').style.backgroundSize = 'cover';
+  $('#dex-wall').style.background = WALLPAPERS[state.wallpaper].dex;
+}
+
+/* ---------- SVG icon set ---------- */
+const I = {
+  wifi: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 18.5a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5zm0-4.7c1.7 0 3.3.65 4.5 1.8l-2.1 2.1a3.4 3.4 0 0 0-4.8 0l-2.1-2.1a6.35 6.35 0 0 1 4.5-1.8zm0-4.7c3 0 5.8 1.15 7.9 3.25l-2.1 2.1a8.25 8.25 0 0 0-11.6 0l-2.1-2.1A11.15 11.15 0 0 1 12 9.1zm0-4.7c4.35 0 8.35 1.7 11.35 4.65l-2.1 2.1a13.1 13.1 0 0 0-18.5 0l-2.1-2.1A15.95 15.95 0 0 1 12 4.4z" transform="scale(.92) translate(1 0)"/></svg>',
+  bt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>',
+  signal: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="14" width="4" height="7" rx="1"/><rect x="8" y="10" width="4" height="11" rx="1"/><rect x="14" y="6" width="4" height="15" rx="1" opacity=".4"/><rect x="20" y="2" width="2" height="19" rx="1" opacity=".3"/></svg>',
+  battery: '<svg viewBox="0 0 24 24" fill="none"><rect x="2" y="8" width="17" height="9" rx="2.5" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="10" width="10" height="5" rx="1" fill="currentColor"/><path d="M21 11v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  dark: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.7 14.9A8.9 8.9 0 0 1 9.1 3.3a9 9 0 1 0 11.6 11.6z"/></svg>',
+  sound: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4.5v-15L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-8.2a8 8 0 0 1 0 16.2v-2.1a6 6 0 0 0 0-12v-2.1z"/></svg>',
+  mute: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9v6h4l5 4.5v-15L8 9H4zm16.2 3l2.3-2.3-1.4-1.4-2.3 2.3-2.3-2.3-1.4 1.4 2.3 2.3-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3z"/></svg>',
+  rotate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 14.9-4M20 12a8 8 0 0 1-14.9 4"/><path d="M19 3v5h-5M5 21v-5h5"/></svg>',
+  flash: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>',
+  plane: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 15.5v-2l-8-4.7V4.2a1.5 1.5 0 0 0-3 0v4.6L2 13.5v2l8-2.4v4.9l-2.2 1.6v1.6L12 20l4.2 1.2v-1.6L14 18v-4.9l7 2.4z"/></svg>',
+  location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  dex: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="5" width="19" height="12" rx="2.5"/><path d="M8 21h8M12 17v4"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.8 12h2.4M18.8 12h2.4M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>',
+  power: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11l8-7 8 7v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20v-9z"/></svg>',
+  recents: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 3a2 2 0 0 1 1.9 1.4l1 3.1a2 2 0 0 1-.5 2L8 10.5a13 13 0 0 0 5.5 5.5l1-1a2 2 0 0 1 2-.5l3.1 1a2 2 0 0 1 1.4 1.9V20a2 2 0 0 1-2.2 2A17.9 17.9 0 0 1 2.1 4.2 2 2 0 0 1 4 2h2.6z" transform="scale(.92) translate(1 1)"/></svg>',
+  msg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.9 3 3 6.6 3 11.2c0 2.6 1.4 5 3.5 6.6-.2 1-.7 2-1.5 2.9 1.6-.2 3.1-.8 4.3-1.6.8.2 1.7.3 2.7.3 5.1 0 9-3.6 9-8.2S17.1 3 12 3z"/></svg>',
+  contacts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14.5 14.5 0 0 1 0 18 14.5 14.5 0 0 1 0-18z"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.9l1.4-2.3h6.4L16.6 7h2.9A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-9z"/><circle cx="12" cy="13" r="3.6"/></svg>',
+  gallery: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.7"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 6.5V12l3.8 2.6"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg>',
+  calc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M8.5 6.5h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/></svg>',
+  note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6V3z"/><path d="M15 3v4h4M9 12h6M9 16h6"/></svg>',
+  cloud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 18a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 18.3 8.2 4.3 4.3 0 0 1 17.5 18H7z"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4.5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></g></svg>',
+  folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4L10 7.5h9.5A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18V6.5z"/></svg>',
+  store: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2.5c3.5 2 5 5.5 5 9l3 3-3.5 1-1.5 4-3-2.5-3 2.5-1.5-4L4 14.5l3-3c0-3.5 1.5-7 5-9z"/><circle cx="12" cy="9" r="1.6"/></svg>',
+  health: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 20.3S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.5a4.7 4.7 0 0 1 8.5 2.7c0 5.8-8.5 11.1-8.5 11.1z"/></svg>',
+  fp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8.2 4.6A8 8 0 0 1 20 10.4M6 6.8A8 8 0 0 0 4 11.7c0 1.6.3 3 .9 4.4M12 5.4a6 6 0 0 1 6 5.5c0 2.3-.4 4.4-1.3 6.3M12 8.4a3.2 3.2 0 0 1 3.2 3.2c0 2.7-.5 5.2-1.6 7.4M8.8 11.6a3.2 3.2 0 0 1 1.6-2.8c-.3 3.4-1 6.4-2.3 9.1"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="5" width="3.4" height="14" rx="1.4"/><rect x="13.6" y="5" width="3.4" height="14" rx="1.4"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5.5v13l9-6.5zM16.5 5H19v14h-2.5z"/></svg>',
+  prev: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 5.5v13L9 12zM5 5h2.5v14H5z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  backsp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h12v14H8L2.5 12z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 20.5 21 12 3.5 3.5 3.5 10l12 2-12 2z"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21S3.5 15.6 3.5 9.8A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.5 3.4c0 5.8-8.5 11.2-8.5 11.2z"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 10l6 6 6-6"/></svg>',
+  palette: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.9 2-2s-.9-2-2-2h-1a2 2 0 0 1 0-4h5a4 4 0 0 0 4-4 6 6 0 0 0-6-4z"/><circle cx="7.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="10.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5 20 6v6c0 4.4-3.4 7.9-8 9.5-4.6-1.6-8-5.1-8-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10" stroke-linecap="round"/></svg>',
+  playstore: '<svg viewBox="0 0 24 24"><path fill="#2fc7f7" d="M4.2 2.7c-.4.4-.7.9-.7 1.5v15.6c0 .6.3 1.1.7 1.5l9.5-9.3-9.5-9.3z"/><path fill="#ffd12e" d="M17 9.8 5.3 3l8.4 8.4L17 9.8z"/><path fill="#ff4f6d" d="M5.3 21l11.7-6.8-3.3-1.8L5.3 21z"/><path fill="#4ade80" d="M17 14.2l2.8-1.6c1.1-.6 1.1-2 0-2.6L17 8.4l-3.3 3 3.3 2.8z"/></svg>',
+};
+
+/* ---------- app registry ---------- */
+const APPS = [
+  { id: 'phone',    name: 'Phone',       grad: 'linear-gradient(160deg,#34d27b,#0e9f5a)', icon: I.phone,    light: false },
+  { id: 'messages', name: 'Messages',    grad: 'linear-gradient(160deg,#57a0ff,#1b6ef3)', icon: I.msg,     light: false },
+  { id: 'contacts', name: 'Contacts',    grad: 'linear-gradient(160deg,#ffb75e,#f97316)', icon: I.contacts, light: false },
+  { id: 'internet', name: 'Internet',    grad: 'linear-gradient(160deg,#7b6cf0,#4f46e5)', icon: I.globe,   light: false },
+  { id: 'camera',   name: 'Camera',      grad: 'linear-gradient(160deg,#5b6472,#23272e)', icon: I.camera,  light: false },
+  { id: 'gallery',  name: 'Gallery',     grad: 'linear-gradient(160deg,#f472b6,#d5458b)', icon: I.gallery, light: false },
+  { id: 'clock',    name: 'Clock',       grad: 'linear-gradient(160deg,#3a4a6b,#151b2b)', icon: I.clock,   light: false },
+  { id: 'calendar', name: 'Calendar',    grad: 'linear-gradient(160deg,#ffffff,#e8eaf0)', icon: I.cal,     light: true },
+  { id: 'calculator', name: 'Calculator', grad: 'linear-gradient(160deg,#3ddc97,#0aa06e)', icon: I.calc, light: false },
+  { id: 'notes',    name: 'Notes',       grad: 'linear-gradient(160deg,#ffd66b,#f5a623)', icon: I.note,    light: false },
+  { id: 'weather',  name: 'Weather',     grad: 'linear-gradient(160deg,#4facfe,#1d6fe0)', icon: I.cloud,   light: false },
+  { id: 'files',    name: 'My Files',    grad: 'linear-gradient(160deg,#ffffff,#e3e7ef)', icon: I.folder, light: true },
+  { id: 'store',    name: 'Galaxy Store', grad: 'linear-gradient(160deg,#8b5cf6,#5b21b6)', icon: I.store, light: false },
+  { id: 'play',    name: 'Play Store',  grad: 'linear-gradient(160deg,#57b0f8,#1a73e8)', icon: I.playstore, light: false },
+  { id: 'health',   name: 'Health',      grad: 'linear-gradient(160deg,#fb7185,#e11d48)', icon: I.health, light: false },
+  { id: 'settings', name: 'Settings',    grad: 'linear-gradient(160deg,#9aa3b2,#5b6472)', icon: I.gear,    light: false },
+];
+const appById = id => APPS.find(a => a.id === id);
+function appIcon(a, size) {
+  const d = el('div', 'aicon rp'); d.style.background = a.grad;
+  if (a.light) d.style.color = '#5b6472'; else d.style.color = '#fff';
+  d.innerHTML = a.icon; if (size) { d.style.width = d.style.height = size + 'px'; }
+  return d;
+}
+
+/* ---------- tiny haptic + click sound ---------- */
+let audioCtx = null;
+function tap() { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }
+function click() {
+  tap();
+  if (state && state.touchSounds === false) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = 1150; g.gain.setValueAtTime(.045, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + .07);
+    o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + .08);
+  } catch (e) {}
+}
+function pop(freq) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(freq || 660, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime((freq || 660) * 1.5, audioCtx.currentTime + .12);
+    g.gain.setValueAtTime(.06, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + .18);
+    o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + .2);
+  } catch (e) {}
+}
+
+/* ---------- ripple (One UI touch feedback) ---------- */
+document.addEventListener('pointerdown', e => {
+  const t = e.target.closest('.rp, .btn, .aitem, .qbtn, .oui-item, .iconbtn, .pinpad button, .dialpad button, .calc-grid button, .su-row, .sh-notif, .rc-card, .tbn, .seg button');
+  if (!t) return;
+  const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 1.15;
+  const s = el('span', 'ripple');
+  s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+  if (getComputedStyle(t).position === 'static') t.style.position = 'relative';
+  t.style.overflow = 'hidden';
+  t.appendChild(s); setTimeout(() => s.remove(), 600);
+}, { passive: true });
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200);
+}
+
+/* ---------- clock ---------- */
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function fmtTime(d) { let h = d.getHours() % 12; if (h === 0) h = 12; return h + ':' + String(d.getMinutes()).padStart(2, '0'); }
+function tickClock() {
+  const d = new Date();
+  const t = fmtTime(d);
+  $('#sb-time').textContent = t;
+  $('#aod .a-t').textContent = t;
+  $('#aod .a-d').textContent = `${DAYS[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`;
+  const lk = $('#lock .lk-clock');
+  if (lk) { lk.innerHTML = `${t.split(':')[0]}<b>:${t.split(':')[1]}</b>`; }
+  const lk2 = $('#lock .lk-date span');
+  if (lk2) lk2.textContent = `${DAYS[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`;
+  $('#sh-date').textContent = `${t} · ${DAYS[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`;
+  const wc = $('#hp1 .wc-time'); if (wc) wc.innerHTML = `${t.split(':')[0]}<b>:${t.split(':')[1]}</b>`;
+  const wc2 = $('#hp1 .wc-sub'); if (wc2) wc2.textContent = `${DAYS[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`;
+  const dcl = $('#dex .tb-clock'); if (dcl) dcl.textContent = t;
+  const cfw = $$('.cf-t'); cfw.forEach(x => { if (x.dataset.live !== '0') { x.textContent = t; const dd = x.parentElement.querySelector('.cf-d'); if (dd) dd.textContent = `${DAYS[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; } });
+}
+setInterval(tickClock, 1000);
+
+/* ---------- statusbar icons ---------- */
+function renderStatusIcons() {
+  const p = [];
+  if (state.airplane) p.push(`<span style="color:var(--sb-ink)">${I.plane.replace('<svg','<svg width="13" height="13"')}</span>`);
+  else {
+    p.push(`<span style="color:var(--sb-ink)">${I.signal.replace('<svg','<svg width="14" height="14"')}</span>`);
+    if (state.wifi) p.push(`<span style="color:var(--sb-ink)">${I.wifi.replace('<svg','<svg width="14" height="14"')}</span>`);
+  }
+  p.push(`<span style="color:var(--sb-ink)">${I.battery.replace('<svg','<svg width="17" height="17"')}</span>`);
+  if (state.batteryPct) p.push(`<span class="pct" style="color:var(--sb-ink)">96</span>`);
+  $('#sb-icons').innerHTML = p.join('');
+}
+
+/* ---------- theme ---------- */
+function applyTheme() {
+  $('#phone').dataset.theme = state.theme;
+  $('#dex').dataset.theme = state.theme;
+  applyAccent();
+  renderStatusIcons();
+  const dark = state.theme === 'dark';
+  const navInk = dark ? '#f3f4f6' : '#0d0e10';
+  document.documentElement.style.setProperty('--nav-ink', navInk);
+}
+
+/* ---------- notifications ---------- */
+const NOTIF_POOL = [
+  { app: 'messages', title: 'Jordan', body: 'Are we still on for tonight?', when: 'now', color: 'linear-gradient(160deg,#57a0ff,#1b6ef3)', icon: I.msg },
+  { app: 'gallery', title: 'Gallery', body: 'Your new memory is ready — 32 photos from last weekend', when: '9m', color: 'linear-gradient(160deg,#f472b6,#d5458b)', icon: I.gallery },
+  { app: 'settings', title: 'Software update', body: 'One UI 9.0 is installed. Tap to explore what\'s new.', when: '1h', color: 'linear-gradient(160deg,#9aa3b2,#5b6472)', icon: I.gear },
+  { app: 'store', title: 'Galaxy Store', body: '3 apps updated automatically in the background', when: '2h', color: 'linear-gradient(160deg,#8b5cf6,#5b21b6)', icon: I.store },
+  { app: 'weather', title: 'Weather', body: 'Rain expected around 5 PM in Irvington', when: '3h', color: 'linear-gradient(160deg,#4facfe,#1d6fe0)', icon: I.cloud },
+];
+function seedNotifs() {
+  if (state.notifs.length === 0) state.notifs = NOTIF_POOL.slice(0, 3).map(n => ({ ...n }));
+}
+function pushNotif(n) {
+  state.notifs.unshift({ when: 'now', ...n });
+  renderShade(); renderLockNotifs(); renderDexNotice();
+  pop(880);
+}
+function renderLockNotifs() {
+  const c = $('#lock .lk-notifs'); if (!c) return;
+  c.innerHTML = '';
+  state.notifs.slice(0, 3).forEach(n => {
+    const d = el('div', 'lk-notif');
+    d.innerHTML = `<div class="ni" style="background:${n.color}">${n.icon.replace('<svg', '<svg width="13" height="13"')}</div>
+      <div style="min-width:0"><div class="nt">${n.title}</div><div class="nm">${n.body}</div></div><div class="nwhen">${n.when}</div>`;
+    c.appendChild(d);
+  });
+}
+
+/* ---------- boot ---------- */
+function boot() {
+  const b = $('#boot'); b.style.display = 'flex'; b.style.opacity = '1';
+  setTimeout(() => { b.style.opacity = '0'; setTimeout(() => { b.style.display = 'none'; afterBoot(); }, 800); }, 2600);
+}
+function afterBoot() {
+  state.booted = true;
+  if (state.setupDone) { showLock(); }
+  else { startSetup(); }
+}
+
+/* ---------- setup wizard ---------- */
+const SU = $('#setup');
+const suState = { step: 0, lang: 'English (United States)', pin: '', pin2: '', phase: 'enter', navMode: 'gestures', dark: false };
+const SU_STEPS = [
+  { id: 'welcome', title: 'Welcome to your Galaxy', sub: 'Choose your language to get started' },
+  { id: 'wifi', title: 'Connect to Wi-Fi', sub: 'Pick a network to get online. Or continue on mobile data.' },
+  { id: 'data', title: 'Copy apps & data', sub: 'Bring your apps, photos and more from your old device.' },
+  { id: 'google', title: 'Sign in to Google', sub: 'Sign in to your Google Account to get the most out of your Galaxy.' },
+  { id: 'samsung', title: 'Samsung account', sub: 'One account for everything Galaxy — Find My Mobile, Samsung Cloud and more.' },
+  { id: 'gservices', title: 'Google services', sub: 'Choose the services you want to use.' },
+  { id: 'fp', title: 'Set up fingerprint', sub: 'Touch the sensor to add your fingerprint. You will need it to unlock your phone.' },
+  { id: 'pin', title: 'Set up a PIN', sub: 'This PIN will be used instead of the fingerprint when it is not recognized.' },
+  { id: 'nav', title: 'Navigation bar', sub: 'Choose how you want to move around your Galaxy.' },
+  { id: 'finish', title: 'Everything is set', sub: 'Your Galaxy is ready. One UI 9 — the best of Samsung, everywhere.' },
+];
+function startSetup() {
+  suState.step = 0; suState.pin = ''; suState.pin2 = ''; suState.phase = 'enter';
+  SU.classList.add('on');
+  SU.innerHTML = '';
+  const dots = el('div', 'su-dots'); SU_STEPS.forEach((_, i) => dots.appendChild(el('i', i === 0 ? 'on' : '')));
+  SU.appendChild(dots);
+  const vp = el('div'); vp.style.cssText = 'flex:1;position:relative;overflow:hidden';
+  SU.appendChild(vp);
+  const bot = el('div', 'su-bottom');
+  bot.innerHTML = `<button class="btn ghost rp" id="su-back">Back</button><button class="btn rp" id="su-next">Next</button>`;
+  SU.appendChild(bot);
+  SU._vp = vp;
+  SU._dots = dots;
+  $('#su-next').onclick = () => suNext();
+  $('#su-back').onclick = () => suBack();
+  suRender(0, false);
+}
+function suNext() {
+  click();
+  const s = SU_STEPS[suState.step];
+  if (s.id === 'pin') {
+    if (suState.pin.length < 4) { toast('Enter a 4-digit PIN'); return; }
+    if (suState.pin2 === '' && suState.pin2 !== undefined && suState.phase !== 'confirm') { toast('Confirm your PIN'); return; }
+  }
+  if (SU_STEPS[suState.step + 1]) suRender(suState.step + 1, true);
+  else finishSetup();
+}
+function suBack() { click(); if (suState.step > 0) suRender(suState.step - 1, false); }
+function suRender(i, forward) {
+  suState.step = i;
+  [...SU._dots.children].forEach((d, j) => d.classList.toggle('on', j === i));
+  SU._vp.innerHTML = '';
+  const st = el('div', 'su-step on ' + (forward ? 'enter' : 'back-enter'));
+  SU._vp.appendChild(st);
+  const s = SU_STEPS[i];
+  const top = el('div', 'su-top');
+  top.innerHTML = `<div class="su-title">${s.title}</div><div class="su-sub">${s.sub}</div>`;
+  const body = el('div', 'su-body');
+  st.append(top, body);
+  const steps = { welcome: suWelcome, wifi: suWifi, data: suData, google: suGoogle, samsung: suSamsung, gservices: suGservices, fp: suFp, pin: b => suPin(b, suState.phase === 'confirm' ? 'confirm' : 'enter'), nav: suNav, finish: suFinish };
+  steps[s.id](body);
+  $('#su-back').style.visibility = i === 0 ? 'hidden' : 'visible';
+  $('#su-next').textContent = s.id === 'finish' ? 'Start using your Galaxy' : (s.id === 'pin' && suState.phase === 'confirm' ? 'Confirm' : 'Next');
+}
+function suWelcome(b) {
+  const langs = ['English (United States)', 'Español (Estados Unidos)', 'Français (France)', 'Deutsch (Deutschland)', '한국어', '中文（简体）', '日本語', 'Português (Brasil)'];
+  const c = el('div', 'su-card rp');
+  langs.forEach(l => {
+    const r = el('div', 'su-row rp' + (l === suState.lang ? ' sel' : ''));
+    r.innerHTML = `<span>${l}</span><span class="chk">${I.check.replace('<svg', '<svg width="22" height="22" fill="#1b6ef3"')}</span>`;
+    r.onclick = () => { click(); suState.lang = l; suWelcome(b); };
+    c.appendChild(r);
+  });
+  b.appendChild(c);
+}
+function suWifi(b) {
+  const nets = [['Galaxy Home 5G', 3, true], ['ATT-Wifi-7742', 2, false], ['Starbucks Guest', 2, false], ['Irvington Public Library', 1, false], ['Add other network', 0, false]];
+  const c = el('div', 'su-card');
+  nets.forEach(([n, sig, lock], idx) => {
+    const r = el('div', 'su-row rp');
+    r.innerHTML = `<span style="color:var(--text2);width:20px">${I.wifi}</span><span style="flex:1">${n}</span>${lock ? `<span style="color:var(--text2);font-size:11px">${sig > 2 ? 'Connected' : ''}</span>` : ''}`;
+    if (idx === 0) r.querySelector('span:nth-child(2)').textContent = n;
+    r.onclick = () => {
+      click();
+      if (idx === 0) { r.querySelector('span:last-child').textContent = 'Connected'; state.wifi = true; toast('Connected to Galaxy Home 5G'); }
+      else if (idx === 4) toast('Enter network details');
+      else toast(`Connecting to ${n}…`);
+    };
+    c.appendChild(r);
+  });
+  b.appendChild(c);
+}
+function suData(b) {
+  const opts = [
+    ['Restore data from cloud backup', 'Galaxy S25 · yesterday · 128 GB', I.cloud],
+    ['Bring data from old device with cable', 'Fast and direct', I.phone],
+    ['Skip and set up as new', 'You can restore later in Settings', I.check],
+  ];
+  const c = el('div', 'su-card');
+  opts.forEach(([t, s, ic]) => {
+    const r = el('div', 'su-row rp');
+    r.innerHTML = `<span style="color:var(--text2)">${ic.replace('<svg', '<svg width="22" height="22"')}</span><div><div style="font-weight:600">${t}</div><div style="font-size:12.5px;color:var(--text2);margin-top:2px">${s}</div></div>`;
+    r.onclick = () => { click(); toast('Skipped — setting up as new'); };
+    c.appendChild(r);
+  });
+  b.appendChild(c);
+  b.appendChild(el('div', 'su-note', 'One UI 9 keeps your data private. Nothing leaves this device during this demo setup.'));
+}
+function suGoogle(b) {
+  b.innerHTML = `
+    <div class="su-card" style="padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div style="font-weight:800;font-size:26px;background:linear-gradient(90deg,#4285F4,#EA4335,#FBBC05,#34A853);-webkit-background-clip:text;background-clip:text;color:transparent">G</div>
+      <div style="font-size:17px;font-weight:600;margin-top:8px">Sign in</div>
+      <div style="font-size:13px;color:var(--text2)">to continue to your Galaxy</div>
+    </div>
+    <div style="padding:6px 2px"><input class="su-input" placeholder="Email or phone number" type="email"></div>
+    <button class="btn ghost rp" id="su-skip" style="margin-top:16px;width:100%">Skip</button>`;
+  b.querySelector('#su-skip').onclick = () => { click(); suNext(); };
+}
+function suSamsung(b) {
+  b.innerHTML = `
+    <div class="su-card" style="padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(160deg,#1428a0,#0a1650);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px">S</div>
+      <div style="font-size:16px;font-weight:600;margin-top:8px">Samsung account</div>
+      <div style="font-size:13px;color:var(--text2);text-align:center;line-height:1.5">Find My Mobile · Samsung Cloud<br>Galaxy Store · Samsung Health</div>
+    </div>
+    <div style="padding:6px 2px"><input class="su-input" placeholder="Email, phone or ID"></div>
+    <button class="btn ghost rp" id="su-skip" style="margin-top:16px;width:100%">Skip for now</button>`;
+  b.querySelector('#su-skip').onclick = () => { click(); suNext(); };
+}
+function suGservices(b) {
+  const svc = [['Back up to Google One', 'Keep your apps and data safe', true], ['Location', 'Better results and recommendations', true], ['Use diagnostics', 'Improve battery and device performance', false]];
+  const c = el('div', 'su-card');
+  svc.forEach(([t, s, on]) => {
+    const r = el('div', 'su-row rp');
+    const sw = el('div', 'switch rp' + (on ? ' on' : ''));
+    r.innerHTML = `<div style="flex:1"><div style="font-weight:500">${t}</div><div style="font-size:12.5px;color:var(--text2);margin-top:2px">${s}</div></div>`;
+    r.appendChild(sw);
+    sw.onclick = e => { e.stopPropagation(); click(); sw.classList.toggle('on'); };
+    c.appendChild(r);
+  });
+  b.appendChild(c);
+  b.appendChild(el('div', 'su-note', 'You can change these anytime in Settings > Google.'));
+}
+function suFp(b) {
+  b.innerHTML = `
+    <div class="fp-big" id="fpbig"><div class="ring"></div>${I.fp.replace('<svg', '<svg width="110" height="110" fill="#1b6ef3"')}</div>
+    <div style="text-align:center;color:var(--text2);font-size:13.5px">Touch and hold the sensor</div>
+    <div class="fp-progress" id="fpp">${[0, 1, 2, 3, 4].map(() => '<i></i>').join('')}</div>`;
+  let hits = 0;
+  const big = b.querySelector('#fpbig');
+  big.onclick = () => {
+    click(); hits++;
+    big.classList.remove('scan'); void big.offsetWidth; big.classList.add('scan');
+    [...b.querySelectorAll('#fpp i')].forEach((d, i) => d.classList.toggle('on', i < hits));
+    if (hits === 5) { b.querySelector('#fpp').insertAdjacentHTML('afterend', '<div style="text-align:center;color:#0e9f5a;font-weight:700;font-size:14px;margin-top:14px">Fingerprint added ✓</div>'); pop(990); }
+  };
+}
+function suPin(b, phase) {
+  b.innerHTML = `
+    <div style="text-align:center;padding:8px 0 4px;font-size:14.5px;color:var(--text2)" id="pin-hint">${phase === 'confirm' ? 'Confirm your PIN' : 'Enter a 4-digit PIN'}</div>
+    <div class="pin-dots" id="pind">${[0, 1, 2, 3].map(() => '<i></i>').join('')}</div>
+    <div class="pinpad" id="pinpad">
+      ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="rp" data-k="${n}">${n}<small>${'', ['ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQRS', 'TUV', 'WXYZ'][n - 2] || ''}</small></button>`).join('')}
+      <button class="ghostb"></button><button class="rp" data-k="0">0</button>
+      <button class="ghostb rp" id="pin-del" style="display:flex;align-items:center;justify-content:center">${I.backsp}</button>
+    </div>`;
+  const dots = b.querySelector('#pind');
+  const arr = phase === 'confirm' ? 'pin2' : 'pin';
+  const active = () => suState[arr];
+  const draw = () => [...dots.children].forEach((d, i) => d.classList.toggle('fill', i < active().length));
+  b.querySelectorAll('#pinpad [data-k]').forEach(btn => btn.onclick = () => {
+    click();
+    if (suState[arr].length < 4) suState[arr] += btn.dataset.k;
+    draw();
+    if (active().length === 4) {
+      setTimeout(() => {
+        if (phase !== 'confirm') {
+          suState.phase = 'confirm';
+          $('#su-next').textContent = 'Confirm';
+          toast('Now confirm your PIN');
+          suPin(b, 'confirm');
+        } else if (suState.pin === suState.pin2) {
+          state.pin = suState.pin; save(); pop(1050); toast('PIN saved');
+          setTimeout(() => suNext(), 500);
+        } else {
+          toast('PINs do not match. Try again.');
+          suState.pin = ''; suState.pin2 = ''; suState.phase = 'enter';
+          $('#su-next').textContent = 'Next';
+          suPin(b, 'enter');
+        }
+      }, 150);
+    }
+  });
+  b.querySelector('#pin-del').onclick = () => {
+    click();
+    suState[arr] = suState[arr].slice(0, -1); draw();
+  };
+  draw();
+}
+function suNav(b) {
+  b.innerHTML = `<div class="su-card" style="padding:18px" id="navcard"></div>`;
+  const c = b.querySelector('#navcard');
+  const opts = [
+    ['gestures', 'Swipe gestures', 'Swipe up to go home, swipe up and hold for recents', 'Full screen'],
+    ['buttons', 'Navigation buttons', 'Classic three-button navigation bar', 'Recent · Home · Back'],
+  ];
+  c.style.display = 'grid'; c.style.gridTemplateColumns = '1fr 1fr'; c.style.gap = '14px';
+  opts.forEach(([id, t, s, tag]) => {
+    const d = el('div', 'rp');
+    d.style.cssText = `border-radius:22px;padding:18px 14px;border:2.5px solid ${suState.navMode === id ? 'var(--blue)' : 'var(--line)'};text-align:center;transition:border-color .25s`;
+    d.innerHTML = `<div style="height:86px;border-radius:14px;background:var(--chip);display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;margin-bottom:12px;gap:${id === 'gestures' ? '0' : '18px'}">
+        ${id === 'gestures' ? '<div style="width:44px;height:4px;border-radius:2px;background:var(--text2)"></div>' : `<div style="display:flex;gap:10px;color:var(--text2)">${I.recents.replace('<svg', '<svg width="16" height="16" style="transform:rotate(90deg)"')}${I.home.replace('<svg', '<svg width="16" height="16"')}${I.back.replace('<svg', '<svg width="16" height="16" style="transform:rotate(180deg)"')}</div>`}
+      </div>
+      <div style="font-weight:700;font-size:14.5px">${t}</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-top:5px;line-height:1.5">${s}</div>`;
+    d.onclick = () => { click(); suState.navMode = id; suNav(b); };
+    c.appendChild(d);
+  });
+}
+function suFinish(b) {
+  b.innerHTML = `
+    <div class="su-card" style="padding:34px 24px;display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div style="width:74px;height:74px;border-radius:50%;background:linear-gradient(160deg,#1428a0,#0a1650);display:flex;align-items:center;justify-content:center;color:#fff">${I.check.replace('<svg', '<svg width="36" height="36"')}</div>
+      <div style="font-size:19px;font-weight:700;margin-top:6px">All set</div>
+      <div style="font-size:13.5px;color:var(--text2);text-align:center;line-height:1.6">Fingerprint · PIN · ${suState.navMode === 'gestures' ? 'Swipe gestures' : 'Navigation buttons'}<br>Everything else is ready to explore.</div>
+    </div>
+    <div class="su-card" style="margin-top:16px">
+      <div class="su-row rp" id="su-dark"><span style="color:var(--text2)">${I.dark.replace('<svg', '<svg width="22" height="22"')}</span><span style="flex:1">Enable dark mode</span><div class="switch rp"></div></div>
+    </div>`;
+  const sw = b.querySelector('#su-dark .switch');
+  b.querySelector('#su-dark').onclick = () => { click(); sw.classList.toggle('on'); };
+}
+function finishSetup() {
+  state.setupDone = true; state.navMode = suState.navMode;
+  if (suState.pin2 === suState.pin && suState.pin.length === 4) state.pin = suState.pin;
+  const dark = $('#su-dark .switch.on');
+  state.theme = dark ? 'dark' : 'light';
+  save(); applyTheme(); applyNavMode();
+  $('#su-next').textContent = 'Finishing…';
+  SU._vp.innerHTML = `<div class="su-step on enter" style="align-items:center;justify-content:center;flex:1">
+    <div style="width:54px;height:54px;border-radius:50%;border:3.5px solid var(--line);border-top-color:var(--blue);animation:spin 1s linear infinite"></div>
+    <div style="margin-top:24px;font-size:15.5px;font-weight:600">Setting up your Galaxy…</div>
+    <div style="margin-top:8px;font-size:12.5px;color:var(--text2)">Applying One UI 9</div></div>`;
+  const spin = document.createElement('style'); spin.textContent = '@keyframes spin{to{transform:rotate(360deg)}}'; document.head.appendChild(spin);
+  setTimeout(() => { SU.classList.remove('on'); showLock(true); }, 2200);
+}
+
+/* ---------- lock screen ---------- */
+function buildLock() {
+  const lk = $('#lock');
+  lk.dataset.clock = state.clockStyle || 'default';
+  lk.innerHTML = `
+    <div class="lk-clock">9<b>:41</b></div>
+    <div class="lk-date"><span></span></div>
+    <div class="lk-wx">${I.cloud.replace('<svg', '<svg width="16" height="16"')}<span>18° Cloudy · Irvington</span></div>
+    <div class="lk-notifs"></div>
+    <div class="lk-bottom">
+      <div class="lk-phone rp" id="lk-phone">${I.phone.replace('<svg', '<svg width="20" height="20"')}</div>
+      <div class="lk-fp" id="lk-fp">${I.fp.replace('<svg', '<svg width="34" height="34" fill="rgba(255,255,255,.9)"')}</div>
+      <div class="lk-swipe">Swipe up to unlock</div>
+    </div>`;
+  renderLockNotifs();
+  tickClock();
+}
+function showLock(fresh) {
+  buildLock();
+  $('#lock').classList.add('on');
+  $('#lock').style.opacity = '1';
+  $('#home').classList.remove('on');
+  $('#drawer').classList.remove('on');
+  $('#app-layer').classList.remove('on');
+  $('#navbar').classList.remove('on');
+  $('#shade').classList.remove('open');
+  $('#aod').classList.remove('on');
+  setupLockGestures();
+}
+function lockDismiss() {
+  const lk = $('#lock');
+  lk.style.transition = 'transform .5s var(--ease-spring),opacity .45s';
+  lk.style.transform = 'translateY(-70px) scale(1.04)'; lk.style.opacity = '0';
+  pop(1200);
+  setTimeout(() => {
+    lk.classList.remove('on'); lk.style.cssText = '';
+    $('#home').classList.add('on', 'unlocking');
+    $('#navbar').classList.add('on');
+    setTimeout(() => $('#home').classList.remove('unlocking'), 600);
+    state.notifs.forEach((n, i) => setTimeout(() => pop(700 + i * 60), 200 + i * 120));
+  }, 380);
+}
+let pinEntry = '';
+function showPinPad() {
+  const lk = $('#lock');
+  lk.innerHTML = `
+    <div class="su-top" style="padding-top:76px;text-align:center"><div class="su-title" style="font-size:24px;color:#fff">Enter your PIN</div></div>
+    <div class="pin-dots" id="lk-pind">${[0, 1, 2, 3].map(() => '<i style="border-color:rgba(255,255,255,.6)"></i>').join('')}</div>
+    <div class="pinpad" style="padding:0 40px">
+      ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="rp" data-k="${n}" style="background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(8px)">${n}</button>`).join('')}
+      <button class="ghostb"></button><button class="rp" data-k="0" style="background:rgba(255,255,255,.14);color:#fff">0</button>
+      <button class="ghostb rp" id="lk-del" style="display:flex;align-items:center;justify-content:center;color:#fff">${I.backsp}</button>
+    </div>`;
+  const dots = lk.querySelector('#lk-pind');
+  const draw = () => [...dots.children].forEach((d, i) => d.classList.toggle('fill', i < pinEntry.length));
+  lk.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+    click();
+    if (pinEntry.length < 4) pinEntry += b.dataset.k;
+    draw();
+    if (pinEntry.length === 4) {
+      setTimeout(() => {
+        if (pinEntry === (state.pin || '1234')) { pinEntry = ''; lockDismiss(); }
+        else { pinEntry = ''; draw(); lk.style.animation = 'shake .4s'; setTimeout(() => lk.style.animation = '', 420); pop(220); }
+      }, 160);
+    }
+  });
+  lk.querySelector('#lk-del').onclick = () => { click(); pinEntry = pinEntry.slice(0, -1); draw(); };
+}
+function setupLockGestures() {
+  const lk = $('#lock');
+  let y0 = null, dy = 0, dragging = false;
+  lk.onpointerdown = e => {
+    if (e.target.closest('.lk-phone')) return;
+    y0 = e.clientY; dragging = true; dy = 0;
+  };
+  lk.onpointermove = e => {
+    if (!dragging) return;
+    dy = Math.min(0, e.clientY - y0);
+    lk.style.transition = 'none';
+    lk.style.transform = `translateY(${dy * .6}px)`;
+    lk.style.opacity = String(1 + dy / 500);
+  };
+  const end = () => {
+    if (!dragging) return; dragging = false;
+    lk.style.transition = 'transform .4s var(--ease-spring),opacity .4s';
+    lk.style.transform = ''; lk.style.opacity = '';
+    if (dy < -110) {
+      lk.onpointerdown = lk.onpointermove = null;
+      if (state.pin) showPinPad();
+      else lockDismiss();
+    }
+  };
+  lk.onpointerup = end; lk.onpointercancel = end;
+  $('#lk-fp').onclick = () => {
+    click();
+    const fp = $('#lk-fp');
+    fp.style.transition = 'transform .3s var(--ease-spring)';
+    fp.style.transform = 'scale(1.35)'; fp.style.color = '#7fd0a0';
+    pop(1100);
+    setTimeout(() => lockDismiss(), 350);
+  };
+  $('#lk-phone').onclick = () => { click(); openApp('phone'); };
+}
+
+/* ---------- home screen ---------- */
+function buildHome() {
+  const p1 = $('#hp1'), p2 = $('#hp2');
+  p1.innerHTML = ''; p2.innerHTML = '';
+  // widgets
+  const wc = el('div', 'widget-clock rp');
+  wc.innerHTML = `<div style="flex:1"><div class="wc-time">9<b>:41</b></div><div class="wc-sub"></div></div>
+    <div style="text-align:right"><div style="font-size:34px;font-weight:300;line-height:1">18°</div><div style="font-size:11px;opacity:.8;margin-top:4px">Cloudy · Irvington</div></div>`;
+  const wwx = el('div', 'widget-wx rp');
+  wwx.innerHTML = `${I.cloud.replace('<svg', '<svg width="42" height="42" fill="rgba(255,255,255,.95)"')}
+    <div><div class="wwx-t">18°</div><div class="wwx-c">Cloudy · feels like 16°</div></div>
+    <div class="wwx-hi">H 21° · L 11°<br>Rain at 5 PM</div>`;
+  wwx.onclick = () => openApp('weather');
+  wc.onclick = () => openApp('clock');
+  p1.append(wc, wwx);
+  // page 1 apps
+  const g1 = el('div', 'agrid');
+  ['gallery', 'camera', 'notes', 'calendar', 'weather', 'store', 'files', 'health'].forEach(id => g1.appendChild(homeIcon(id)));
+  p1.appendChild(g1);
+  // page 2 apps
+  const g2 = el('div', 'agrid');
+  ['calculator', 'contacts', 'clock', 'store', 'play'].forEach(id => g2.appendChild(homeIcon(id)));
+  p2.appendChild(g2);
+  // dock
+  const dock = $('#dock'); dock.innerHTML = '';
+  ['phone', 'messages', 'internet', 'settings'].forEach(id => {
+    const it = homeIcon(id, true); dock.appendChild(it);
+  });
+  // search
+  const hs = $('#home-search');
+  hs.innerHTML = `${I.search.replace('<svg', '<svg width="17" height="17"')}<span>Search phone and more</span><span style="margin-left:auto;display:flex;gap:10px;opacity:.85">${I.gear.replace('<svg', '<svg width="16" height="16"')}</span>`;
+  hs.onclick = () => { click(); openDrawer(); };
+  tickClock();
+  setupHomeGestures();
+}
+function homeIcon(id, noLabel) {
+  const a = appById(id);
+  const d = el('div', 'aitem rp');
+  d.appendChild(appIcon(a));
+  if (!noLabel) d.appendChild(el('div', 'alabel', a.name));
+  d.onclick = () => openApp(id, d);
+  return d;
+}
+function setupHomeGestures() {
+  const pages = $('#home-pages');
+  let x0 = null;
+  pages.onpointerdown = e => { x0 = e.clientX; };
+  pages.onpointerup = e => {
+    if (x0 == null) return;
+    const dx = e.clientX - x0; x0 = null;
+    const off = pages.dataset.off === '1';
+    const wp = $('#wallpaper');
+    const move = off2 => { $('#hp1').style.transform = $('#hp2').style.transform = off2 ? 'translateX(-100%)' : 'translateX(0)'; };
+    if (dx < -50 && !off) { pages.dataset.off = '1'; move(true); wp.style.transform = 'translateX(-6%) scale(1.12)'; setPageDot(1); click(); }
+    else if (dx > 50 && off) { pages.dataset.off = '0'; move(false); wp.style.transform = ''; setPageDot(0); click(); }
+  };
+}
+function setPageDot(i) { $$('#home-dots i').forEach((d, j) => d.classList.toggle('on', j === i)); }
+
+/* ---------- app drawer ---------- */
+function buildDrawer() {
+  const g = $('#dr-grid'); g.innerHTML = '';
+  APPS.forEach(a => g.appendChild(homeIcon(a.id)));
+  const s = $('#dr-search');
+  s.innerHTML = `${I.search.replace('<svg', '<svg width="16" height="16"')}<input placeholder="Search" id="dr-input">`;
+  $('#dr-input').oninput = e => {
+    const q = e.target.value.toLowerCase();
+    $$('#dr-grid .aitem').forEach(it => {
+      const a = appById(it.dataset.app); it.style.display = !q || a.name.toLowerCase().includes(q) ? '' : 'none';
+    });
+  };
+  g.querySelectorAll('.aitem').forEach(it => { it.dataset.app = APPS.find(a => it.textContent.includes(a.name))?.id; });
+}
+function openDrawer() {
+  const d = $('#drawer');
+  d.classList.add('on', 'dopening');
+  setTimeout(() => d.classList.remove('dopening'), 450);
+  setTimeout(() => { const i = $('#dr-input'); if (i) i.blur(); }, 50);
+}
+function closeDrawer() { $('#drawer').classList.remove('on'); }
+
+/* ---------- app framework ---------- */
+let currentApp = null;
+function openApp(id, origin) {
+  const a = appById(id); if (!a) return;
+  click();
+  closeDrawer(); closeRecents();
+  const layer = $('#app-layer');
+  layer.innerHTML = '';
+  const frame = el('div', 'app-frame');
+  layer.appendChild(frame);
+  layer.dataset.app = id;
+  a.build(frame, { phone: true });
+  if (origin) {
+    const r = origin.getBoundingClientRect(), sr = layer.getBoundingClientRect();
+    const cx = r.left + r.width / 2 - sr.left, cy = r.top + r.height / 2 - sr.top;
+    frame.style.transformOrigin = `${cx}px ${cy}px`;
+  }
+  layer.classList.add('on', 'opening');
+  $('#home').style.transform = 'scale(.94)';
+  $('#home').style.opacity = '.6';
+  currentApp = id;
+  if (!state.recentApps.includes(id)) state.recentApps.unshift(id);
+  state.recentApps = state.recentApps.slice(0, 8);
+  setTimeout(() => layer.classList.remove('opening'), 450);
+}
+function closeApp(cb) {
+  const layer = $('#app-layer');
+  if (!layer.classList.contains('on')) { if (cb) cb(); return; }
+  layer.classList.add('closing');
+  pop(560);
+  setTimeout(() => {
+    layer.classList.remove('on', 'closing'); layer.innerHTML = '';
+    $('#home').style.transform = ''; $('#home').style.opacity = '';
+    currentApp = null;
+    if (cb) cb();
+  }, 300);
+}
+function goHome() {
+  closeDrawer(); closeRecents(); $('#shade').classList.remove('open');
+  closeApp();
+}
+/* app back handling */
+function appBack() {
+  const layer = $('#app-layer');
+  if (!layer.classList.contains('on')) return false;
+  const frame = layer.querySelector('.app-frame');
+  if (frame && frame._back && frame._back()) return true;
+  closeApp(); return true;
+}
+
+/* ---------- quick panel + notifications shade ---------- */
+I.moon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.7 14.9A8.9 8.9 0 0 1 9.1 3.3a9 9 0 1 0 11.6 11.6z"/></svg>';
+const QUICK = [
+  { k: 'wifi', name: 'Wi-Fi', icon: I.wifi, sub: () => state.wifi ? 'Galaxy Home' : 'Off' },
+  { k: 'bt', name: 'Bluetooth', icon: I.bt, sub: () => state.bt ? 'On' : 'Off' },
+  { k: 'sound', name: 'Sound', icon: () => state.sound ? I.sound : I.mute, sub: () => state.sound ? 'On' : 'Muted' },
+  { k: 'dark', name: 'Dark mode', icon: I.dark, sub: () => state.theme === 'dark' ? 'On' : 'Off' },
+  { k: 'rotate', name: 'Auto rotate', icon: I.rotate, sub: () => 'Portrait' },
+  { k: 'flash', name: 'Flashlight', icon: I.flash, sub: () => 'Off' },
+  { k: 'dex', name: 'Samsung DeX', icon: I.dex, sub: () => 'Tap to start' },
+  { k: 'plane', name: 'Airplane', icon: I.plane, sub: () => state.airplane ? 'On' : 'Off' },
+  { k: 'loc', name: 'Location', icon: I.location, sub: () => 'On' },
+  { k: 'batt', name: 'Power saving', icon: I.battery, sub: () => 'Off' },
+  { k: 'focus', name: 'Focus', icon: I.moon, sub: () => 'Off' },
+  { k: 'sync', name: 'Sync', icon: I.cloud, sub: () => 'On' },
+];
+I.moon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.7 14.9A8.9 8.9 0 0 1 9.1 3.3a9 9 0 1 0 11.6 11.6z"/></svg>';
+function renderShade() {
+  const b = $('#sh-body'); if (!b) return;
+  b.innerHTML = '';
+  // quick panel
+  const qp = el('div'); qp.id = 'qp';
+  qp.innerHTML = `<div class="qp-grid" id="qp-grid"></div>
+    <div class="oslider qp-bright rp" id="qp-bright"><div class="fill"></div><span class="ico">${I.sun.replace('<svg', '<svg width="19" height="19" fill="rgba(0,0,0,.55)"')}</span><div class="knob"></div></div>
+    <div id="qp-media">
+      <div class="mq-art"><canvas width="52" height="52" id="mq-art-c"></canvas></div>
+      <div><div class="mq-t">Over the Horizon</div><div class="mq-a">Samsung · One UI 9</div>
+        <div class="wave">${[0, 1, 2, 3, 4, 5, 6].map(i => `<i style="animation-delay:${i * .12}s"></i>`).join('')}</div></div>
+      <div class="mq-ctl">
+        <button class="iconbtn rp" id="mq-prev">${I.prev}</button>
+        <button class="iconbtn rp" id="mq-play">${I.pause}</button>
+        <button class="iconbtn rp" id="mq-next">${I.next}</button>
+      </div>
+    </div>`;
+  b.appendChild(qp);
+  const grid = qp.querySelector('#qp-grid');
+  QUICK.forEach(q => {
+    const qIcon = typeof q.icon === 'function' ? q.icon() : q.icon;
+    const d = el('button', 'qbtn rp' + (qActive(q) ? ' on' : ''));
+    d.innerHTML = `${qIcon}<span>${q.name}</span>${q.sub() ? `<span class="qsub">${q.sub()}</span>` : ''}`;
+    d.onclick = () => { qToggle(q); renderShade(); renderStatusIcons(); };
+    grid.appendChild(d);
+  });
+  // brightness
+  const br = qp.querySelector('#qp-bright');
+  const setBr = v => { state.brightness = clamp(v, .05, 1); drawBr(); applyBrightness(); };
+  const drawBr = () => {
+    br.querySelector('.fill').style.width = (state.brightness * 100) + '%';
+    br.querySelector('.knob').style.left = `calc(${state.brightness * 100}% )`;
+  };
+  const brFromEvent = e => { const r = br.getBoundingClientRect(); setBr((e.clientX - r.left) / r.width); };
+  br.onpointerdown = e => { br.setPointerCapture(e.pointerId); brFromEvent(e); br.onpointermove = brFromEvent; };
+  br.onpointerup = () => { br.onpointermove = null; };
+  drawBr();
+  // media controls
+  qp.querySelector('#mq-play').onclick = e => {
+    const w = qp.querySelector('.wave'); w.style.display = w.style.display === 'none' ? 'flex' : 'none';
+    e.currentTarget.innerHTML = w.style.display === 'none' ? I.play : I.pause;
+  };
+  qp.querySelector('#mq-next').onclick = () => toast('Over the Horizon — next up');
+  qp.querySelector('#mq-prev').onclick = () => toast('Over the Horizon — replaying');
+  // notifications
+  state.notifs.forEach((n, i) => {
+    const d = el('div', 'sh-notif rp');
+    d.innerHTML = `<div class="ni" style="background:${n.color}">${n.icon.replace('<svg', '<svg width="17" height="17" fill="#fff"')}</div>
+      <div style="min-width:0;flex:1"><div class="nt">${n.title}</div><div class="nm">${n.body}</div></div><div class="nwhen">${n.when}</div>`;
+    let sx = null, swiping = false;
+    d.onpointerdown = e => { sx = e.clientX; swiping = false; try { d.setPointerCapture(e.pointerId); } catch (err) {} };
+    d.onpointermove = e => {
+      if (sx == null) return;
+      const dx = e.clientX - sx;
+      if (Math.abs(dx) > 8) { swiping = true; d.classList.add('swiping'); d.style.transform = `translateX(${dx}px)`; d.style.opacity = String(Math.max(.25, 1 - Math.abs(dx) / 220)); }
+    };
+    const endSwipe = e => {
+      if (sx == null) return;
+      const dx = e.clientX - sx; sx = null;
+      d.classList.remove('swiping');
+      if (Math.abs(dx) > 90) {
+        d.classList.add('dismiss');
+        const idx = state.notifs.indexOf(n);
+        if (idx > -1) state.notifs.splice(idx, 1);
+        setTimeout(() => { renderShade(); renderLockNotifs(); }, 270);
+      } else { d.style.transform = ''; d.style.opacity = ''; }
+    };
+    d.onpointerup = endSwipe; d.onpointercancel = endSwipe;
+    d.onclick = () => { if (!swiping) { closeShade(); openApp(n.app); } };
+    d.oncontextmenu = e => { e.preventDefault(); state.notifs.splice(i, 1); renderShade(); renderLockNotifs(); };
+    b.appendChild(d);
+  });
+  if (state.notifs.length === 0) b.insertAdjacentHTML('beforeend', '<div style="text-align:center;color:var(--text2);font-size:13px;padding:22px 0">No notifications</div>');
+  b.insertAdjacentHTML('beforeend', '<div style="text-align:center;color:var(--text2);font-size:11.5px;padding:10px 0 4px;opacity:.7">Notification settings · Clear all</div>');
+  const clr = b.lastChild;
+  clr.onclick = () => { click(); state.notifs = []; renderShade(); renderLockNotifs(); toast('Notifications cleared'); };
+}
+function qActive(q) {
+  return ({ wifi: state.wifi, bt: state.bt, sound: state.sound, dark: state.theme === 'dark', plane: state.airplane, dex: state.dex }[q.k]) || false;
+}
+function qToggle(q) {
+  click();
+  if (q.k === 'wifi') { state.wifi = !state.wifi; toast(state.wifi ? 'Wi-Fi on' : 'Wi-Fi off'); }
+  else if (q.k === 'bt') { state.bt = !state.bt; toast(state.bt ? 'Bluetooth on' : 'Bluetooth off'); }
+  else if (q.k === 'sound') state.sound = !state.sound;
+  else if (q.k === 'dark') { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); save(); }
+  else if (q.k === 'plane') { state.airplane = !state.airplane; toast(state.airplane ? 'Airplane mode on' : 'Airplane mode off'); }
+  else if (q.k === 'flash') toast('Flashlight on');
+  else if (q.k === 'dex') { closeShade(); setTimeout(() => enterDex(), 250); return; }
+  else toast(q.name + ' tapped');
+  renderStatusIcons(); save();
+}
+function applyBrightness() {
+  const w = $('#wallpaper');
+  const f = .35 + state.brightness * .65;
+  const ec = state.eyeComfort ? ' sepia(.28) saturate(1.12)' : '';
+  $('#screen').style.filter = `brightness(${f.toFixed(2)})${ec}`;
+  w.style.filter = 'none';
+}
+function openShade() { renderShade(); $('#shade').classList.add('on'); requestAnimationFrame(() => $('#shade').classList.add('open')); }
+function closeShade() {
+  const s = $('#shade');
+  s.classList.remove('open');
+  setTimeout(() => { if (!s.classList.contains('open')) s.classList.remove('on'); }, 480);
+}
+function setupShadeGestures() {
+  const sb = $('#statusbar'), shade = $('#shade'), panel = shade.querySelector('.sh-panel');
+  let y0 = null, dragging = false;
+  const down = e => {
+    if ($('#lock').classList.contains('on') || !state.booted) return;
+    y0 = e.clientY; dragging = false;
+  };
+  const move = e => {
+    if (y0 == null) return;
+    const dy = e.clientY - y0;
+    if (dy > 14 && !dragging) { dragging = true; shade.classList.add('on', 'dragging'); renderShade(); }
+    if (dragging && dy > 0) {
+      const h = panel.getBoundingClientRect().height || 700;
+      panel.style.transform = `translateY(${(dy / h - 1) * 100}%)`;
+      shade.querySelector('.sh-scrim').style.opacity = String(clamp(dy / 300, 0, 1));
+    }
+  };
+  const up = e => {
+    if (dragging) {
+      const dy = e.clientY - y0;
+      shade.classList.remove('dragging'); panel.style.transform = '';
+      shade.querySelector('.sh-scrim').style.opacity = '';
+      if (dy > 120) { shade.classList.add('open'); pop(760); }
+      else shade.classList.remove('open', 'on');
+    }
+    y0 = null; dragging = false;
+  };
+  sb.addEventListener('pointerdown', down);
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
+  sb.addEventListener('click', () => { if (!dragging && $('#shade').classList.contains('open')) closeShade(); else if (state.booted && !$('#lock').classList.contains('on')) openShade(); });
+  shade.querySelector('.sh-scrim').addEventListener('click', closeShade);
+  shade.querySelector('.sh-handle').addEventListener('click', closeShade);
+  // shade header buttons
+  $('#sh-head-btns').innerHTML = `<button class="iconbtn rp" id="shb-set">${I.gear}</button><button class="iconbtn rp" id="shb-pow">${I.power}</button>`;
+  $('#shb-set').onclick = () => { closeShade(); openApp('settings'); };
+  $('#shb-pow').onclick = () => { closeShade(); showPowerMenu(); };
+}
+
+/* ---------- power menu / AOD / volume ---------- */
+function showPowerMenu() {
+  const pm = $('#powermenu');
+  pm.innerHTML = `<div class="pm-card">
+    <button class="rp" id="pm-off"><span class="pmi">${I.power}</span>Power off</button>
+    <button class="rp" id="pm-restart"><span class="pmi">${I.rotate}</span>Restart</button>
+    <button class="rp" id="pm-dex"><span class="pmi">${I.dex}</span>DeX</button>
+  </div>`;
+  pm.classList.add('on');
+  pm.onclick = e => { if (e.target === pm) pm.classList.remove('on'); };
+  $('#pm-off').onclick = () => { pm.classList.remove('on'); screenOff(); };
+  $('#pm-restart').onclick = () => { pm.classList.remove('on'); restart(); };
+  $('#pm-dex').onclick = () => { pm.classList.remove('on'); enterDex(); };
+}
+function restart() {
+  goHome();
+  const b = $('#boot'); b.style.display = 'flex'; b.style.opacity = '1';
+  $('#lock').classList.remove('on'); $('#home').classList.remove('on'); $('#navbar').classList.remove('on');
+  setTimeout(() => { b.style.opacity = '0'; setTimeout(() => { b.style.display = 'none'; showLock(); }, 800); }, 2400);
+}
+function screenOff() {
+  const scr = $('#screen');
+  scr.style.transition = 'filter .5s ease'; scr.style.filter = 'brightness(0)';
+  setTimeout(() => {
+    $('#aod').classList.add('on');
+    scr.style.transition = ''; scr.style.filter = '';
+    const wake = () => {
+      $('#aod').classList.remove('on');
+      document.removeEventListener('pointerdown', wake, true);
+      showLock();
+    };
+    setTimeout(() => document.addEventListener('pointerdown', wake, true), 600);
+  }, 550);
+}
+function volumeHud(delta) {
+  state.volume = clamp(state.volume + delta, 0, 1);
+  const v = $('#volhud');
+  v.innerHTML = `${I.sound}<div class="vtrack"><div class="vfill" style="height:${state.volume * 100}%"></div></div>${I.mute}`;
+  v.classList.add('on');
+  clearTimeout(v._t); v._t = setTimeout(() => v.classList.remove('on'), 1600);
+}
+
+/* ---------- navbar + gestures ---------- */
+function applyNavMode() {
+  const nb = $('#navbar');
+  nb.classList.toggle('gestures', state.navMode === 'gestures');
+  nb.classList.toggle('buttons', state.navMode === 'buttons');
+  $('#nb-back').innerHTML = I.back;
+  $('#nb-home').innerHTML = I.home;
+  $('#nb-recents').innerHTML = I.recents;
+}
+function setupNav() {
+  const nb = $('#navbar');
+  let y0 = null, t0 = 0, moved = false;
+  nb.addEventListener('pointerdown', e => {
+    y0 = e.clientY; t0 = Date.now(); moved = false;
+    try { nb.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  document.addEventListener('pointermove', e => { if (y0 != null && e.clientY - y0 < -24) moved = true; });
+  document.addEventListener('pointerup', e => {
+    if (y0 == null) return;
+    const dt = Date.now() - t0, dy = y0 - e.clientY;
+    y0 = null;
+    if (state.navMode === 'buttons') return;
+    if (moved && dy > 60) {
+      if (dt > 380) openRecents();
+      else if ($('#home').classList.contains('on') && !$('#drawer').classList.contains('on') && !$('#app-layer').classList.contains('on')) openDrawer();
+      else if ($('#drawer').classList.contains('on')) closeDrawer();
+      else goHome();
+    }
+  });
+  nb.addEventListener('click', () => { if (state.navMode === 'gestures' && !moved) goHome(); });
+  $('#nb-back').onclick = () => { click(); if (!appBack()) { if ($('#drawer').classList.contains('on')) closeDrawer(); else if ($('#recents').classList.contains('on')) closeRecents(); } };
+  $('#nb-home').onclick = () => { click(); goHome(); };
+  $('#nb-recents').onclick = () => { click(); openRecents(); };
+  // home-screen swipe up for drawer (on empty home area)
+  const homeEl = $('#home');
+  homeEl.addEventListener('pointerdown', e => { homeEl._y0 = e.clientY; homeEl._x0 = e.clientX; });
+  document.addEventListener('pointerup', e => {
+    if (homeEl._y0 == null) return;
+    const dy = homeEl._y0 - e.clientY, dx = Math.abs(e.clientX - (homeEl._x0 || 0));
+    homeEl._y0 = null;
+    if (dy > 80 && dx < 60 && !$('#app-layer').classList.contains('on') && !$('#drawer').classList.contains('on')) openDrawer();
+  });
+}
+
+/* ---------- recents ---------- */
+function openRecents() {
+  const r = $('#recents'), row = $('#rc-row');
+  row.innerHTML = '';
+  if (state.recentApps.length === 0) {
+    row.innerHTML = '<div class="rc-empty">No recent apps</div>';
+  } else {
+    state.recentApps.forEach((id, i) => {
+      const a = appById(id);
+      const c = el('div', 'rc-card rp');
+      c.style.animationDelay = (i * 40) + 'ms';
+      c.innerHTML = `<div class="rc-head">${''}</div><div class="rc-body"></div>
+        <button class="rc-x rp">${I.x.replace('<svg', '<svg fill="currentColor"')}</button>`;
+      c.querySelector('.rc-head').appendChild(appIcon(a));
+      c.querySelector('.rc-head').insertAdjacentHTML('beforeend', `<span>${a.name}</span>`);
+      c.querySelector('.rc-body').appendChild(appIcon(a));
+      c.onclick = () => { closeRecents(); openApp(id); };
+      c.querySelector('.rc-x').onclick = e => { e.stopPropagation(); state.recentApps = state.recentApps.filter(x => x !== id); openRecents(); };
+      row.appendChild(c);
+    });
+  }
+  r.classList.add('on');
+  $('#rc-close-all').onclick = () => { click(); state.recentApps = []; closeRecents(); toast('All apps closed'); };
+}
+function closeRecents() { $('#recents').classList.remove('on'); }
+
+/* ---------- app builders ---------- */
+function appBar(title, sub, actions) {
+  const b = el('div', 'app-bar');
+  b.innerHTML = `<div><h1>${title}</h1>${sub ? `<div class="ab-sub">${sub}</div>` : ''}</div><div class="ab-actions">${actions || ''}</div>`;
+  return b;
+}
+function card(...rows) { const c = el('div', 'oui-card'); rows.forEach(r => c.appendChild(r)); return c; }
+function item(icon, title, sub, end, onclick) {
+  const d = el('div', 'oui-item rp');
+  d.innerHTML = `<span class="oi-ic">${icon || ''}</span><div class="oi-main">${sub ? `<div class="oi-t">${title}</div><div class="oi-s">${sub}</div>` : `<div class="oi-t">${title}</div>`}</div>${end ? `<span class="oi-end">${end}</span>` : ''}`;
+  if (onclick) d.onclick = e => { click(); onclick(d, e); };
+  return d;
+}
+function switchItem(icon, title, sub, get, set) {
+  const d = el('div', 'oui-item');
+  const sw = el('div', 'switch rp' + (get() ? ' on' : ''));
+  d.innerHTML = `<span class="oi-ic">${icon || ''}</span><div class="oi-main"><div class="oi-t">${title}</div>${sub ? `<div class="oi-s">${sub}</div>` : ''}</div>`;
+  d.appendChild(sw);
+  sw.onclick = e => { e.stopPropagation(); click(); set(!get()); sw.classList.toggle('on', get()); };
+  return d;
+}
+function sep() { return el('div', 'oui-sep'); }
+function chevEnd() { return I.chev; }
+
+/* ---- Settings ---- */
+function mkSlider(icon, get, set) {
+  const sl = el('div', 'oslider rp');
+  sl.innerHTML = `<div class="fill"></div><span class="ico">${icon || ''}</span><div class="knob"></div>`;
+  const draw = () => {
+    const v = clamp(get(), 0, 1);
+    sl.querySelector('.fill').style.width = v * 100 + '%';
+    sl.querySelector('.knob').style.left = `calc(${v * 100}% )`;
+  };
+  const from = e => { const r = sl.getBoundingClientRect(); set(clamp((e.clientX - r.left) / r.width, 0, 1)); draw(); };
+  sl.onpointerdown = e => { sl.setPointerCapture(e.pointerId); from(e); sl.onpointermove = from; };
+  sl.onpointerup = sl.onpointerleave = () => { sl.onpointermove = null; };
+  draw();
+  return sl;
+}
+const settingsApp = appById('settings');
+settingsApp.build = (f) => {
+  const search = el('div');
+  search.style.cssText = 'margin:6px 16px 4px;background:var(--card);border-radius:24px;padding:13px 20px;color:var(--text2);font-size:14px;display:flex;gap:12px;align-items:center';
+  search.innerHTML = `${I.search.replace('<svg', '<svg width="17" height="17"')}Search settings`;
+  const me = el('div', 'oui-card set-me rp');
+  me.innerHTML = `<div class="avatar">G</div><div style="flex:1"><div style="font-weight:700;font-size:16px">Galaxy user</div><div style="font-size:12.5px;color:var(--text2);margin-top:2px">Samsung account · Google account</div></div>${I.chev.replace('<svg', '<svg width="18" height="18" fill="var(--text2)"')}`;
+  me.onclick = () => toast('Signed in as guest');
+  f.append(appBar('Settings'), search, me);
+  const sc = el('div', 'app-scroll'); sc.style.paddingTop = '8px'; sc.style.paddingBottom = '80px';
+  f.appendChild(sc);
+  const renderMain = () => {
+    sc.innerHTML = '';
+    const head = t => { sc.appendChild(el('div', 'oui-head', t)); };
+    head('Connections');
+    sc.appendChild(card(
+      item(I.wifi, 'Wi-Fi', state.wifi ? 'Galaxy Home 5G · Connected' : 'Off', chevEnd(), () => subWifi()),
+      sep(),
+      item(I.bt, 'Bluetooth', state.bt ? 'On' : 'Off', chevEnd(), () => toast('Bluetooth settings')),
+      sep(),
+      item(I.plane, 'Flight mode', state.airplane ? 'On' : 'Off', chevEnd(), () => { state.airplane = !state.airplane; renderStatusIcons(); save(); renderMain(); }),
+      sep(),
+      item(I.globe, 'Mobile hotspot and tethering', 'Off', chevEnd(), () => toast('Hotspot'))
+    ));
+    head('Sounds and vibration');
+    sc.appendChild(card(item(I.sound, 'Sound mode', state.soundMode === 'sound' ? 'Sound' : state.soundMode === 'vibrate' ? 'Vibrate' : 'Mute', chevEnd(), () => subSounds())));
+    head('Notifications');
+    sc.appendChild(card(item(I.msg, 'Notifications', 'App alerts and Do not disturb', chevEnd(), () => subNotifs())));
+    head('Display');
+    sc.appendChild(card(
+      switchItem(I.dark, 'Dark mode', 'One UI 9 dark theme', () => state.theme === 'dark', v => { state.theme = v ? 'dark' : 'light'; applyTheme(); save(); }),
+      sep(),
+      item(I.sun, 'Brightness and eye comfort', Math.round(state.brightness * 100) + '%', chevEnd(), () => subDisplay())
+    ));
+    head('Wallpaper and style');
+    sc.appendChild(card(
+      item(I.gallery, 'Wallpaper', WALLPAPERS[state.wallpaper] ? state.wallpaper[0].toUpperCase() + state.wallpaper.slice(1) : '', chevEnd(), () => subWallpaper()),
+      sep(),
+      item(I.palette, 'Color palette', (state.accent || 'blue')[0].toUpperCase() + (state.accent || 'blue').slice(1), chevEnd(), () => subAccent())
+    ));
+    head('Lock screen and AOD');
+    sc.appendChild(card(item(I.lock, 'Lock screen', 'Clock style · Always On Display', chevEnd(), () => subLock())));
+    head('Security and privacy');
+    sc.appendChild(card(item(I.shield, 'Security and privacy', 'Screen lock · Find My Mobile', chevEnd(), () => subSecurity())));
+    head('Battery');
+    sc.appendChild(card(item(I.battery, 'Battery', (state.batteryPct ? 'Percentage shown' : 'Percentage hidden') + ' · 96%', chevEnd(), () => subBattery())));
+    head('Digital Wellbeing and parental controls');
+    sc.appendChild(card(item(I.health, 'Digital Wellbeing', 'Screen time and app timers', chevEnd(), () => subDW())));
+    head('Advanced features');
+    sc.appendChild(card(
+      item(I.dex, 'Samsung DeX', 'Continue on a larger screen', chevEnd(), () => { setTimeout(() => enterDex(), 250); }),
+      sep(),
+      item(I.recents, 'Multi window', 'Split screen and pop-up view', chevEnd(), () => toast('Multi window'))
+    ));
+    head('Accounts and backup');
+    sc.appendChild(card(item(I.cloud, 'Accounts and backup', 'Samsung Cloud · Google Drive', chevEnd(), () => toast('Accounts'))));
+    head('Software update');
+    sc.appendChild(card(item(I.down, 'Software update', 'Download and install', chevEnd(), () => subUpdate())));
+    head('About phone');
+    sc.appendChild(card(
+      item(I.phone, 'Phone', 'Galaxy S26 Ultra · SM-S948B', chevEnd(), () => subAbout()),
+      sep(),
+      item(I.gear, 'Software information', 'One UI 9.0 · Android 17', chevEnd(), () => subAbout())
+    ));
+  };
+  const push = (title, builder) => {
+    const sub = el('div', 'app-frame');
+    sub.style.cssText = 'position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:2';
+    const back = el('div', 'iconbtn rp', I.back);
+    back.style.cssText = 'margin:60px 14px 0 4px';
+    back.onclick = () => { click(); sub.style.animation = 'suInBack .3s var(--ease-spring)'; setTimeout(() => sub.remove(), 280); };
+    const h = el('div', 'app-bar');
+    h.innerHTML = `<h1>${title}</h1>`;
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start';
+    bar.append(back, h);
+    const body = el('div', 'app-scroll'); body.style.cssText = 'flex:1;padding:8px 0 80px';
+    sub.append(bar, body);
+    builder(body);
+    sub.style.animation = 'suIn .3s var(--ease-spring)';
+    f.appendChild(sub);
+  };
+  const subWifi = () => push('Wi-Fi', b => {
+    const c = card(switchItem(I.wifi, 'Wi-Fi', 'Connect to networks', () => state.wifi, v => { state.wifi = v; save(); renderStatusIcons(); }));
+    b.appendChild(c);
+    if (state.wifi) {
+      b.appendChild(el('div', 'oui-head', 'Available networks'));
+      const nets = [['Galaxy Home 5G', 'Connected'], ['ATT-Wifi-7742', 'Secured'], ['Starbucks Guest', 'Open']];
+      b.appendChild(card(...nets.map(([n, st]) => item(I.wifi, n, st, '', () => toast('Connected to ' + n)))));
+    }
+  });
+  const subSounds = () => push('Sounds and vibration', b => {
+    const seg = el('div', 'seg');
+    ['sound', 'vibrate', 'mute'].forEach(m => {
+      const btn = el('button', state.soundMode === m ? 'on' : '');
+      btn.textContent = m[0].toUpperCase() + m.slice(1);
+      btn.onclick = () => { click(); state.soundMode = m; state.sound = m === 'sound'; save(); subSounds(); };
+      seg.appendChild(btn);
+    });
+    b.appendChild(seg);
+    b.appendChild(el('div', 'oui-head', 'Volume'));
+    b.appendChild(mkSlider(I.sound, () => state.volume, v => { state.volume = v; }));
+    b.appendChild(el('div', 'oui-head', 'Interaction'));
+    b.appendChild(card(
+      switchItem(null, 'Touch sounds', 'Play sound when you tap the screen', () => state.touchSounds !== false, v => { state.touchSounds = v; save(); }),
+      sep(),
+      switchItem(null, 'Vibration feedback', 'Vibrate on taps', () => true, v => toast(v ? 'Vibration on' : 'Vibration off'))
+    ));
+  });
+  const subNotifs = () => push('Notifications', b => {
+    b.appendChild(el('div', 'oui-head', 'Do not disturb'));
+    b.appendChild(card(switchItem(I.moon, 'Do not disturb', 'Silence calls and alerts', () => state.dnd, v => { state.dnd = v; save(); })));
+    b.appendChild(el('div', 'oui-head', 'App notifications'));
+    const rows = [['messages', 'Messages'], ['calendar', 'Calendar'], ['play', 'Play Store'], ['health', 'Health'], ['clock', 'Clock'], ['gallery', 'Gallery']];
+    const parts = [];
+    rows.forEach(([id, n], i) => {
+      if (i) parts.push(sep());
+      const icon = appById(id) ? appById(id).icon : '';
+      parts.push(switchItem(icon, n, 'Alerts, sounds and badges', () => state.notifPrefs[id] !== false, v => { state.notifPrefs[id] = v; save(); }));
+    });
+    b.appendChild(card(...parts));
+    b.appendChild(el('div', 'oui-head', 'More'));
+    b.appendChild(card(
+      item(null, 'Notification history', 'Recent dismissed alerts', chevEnd(), () => toast('Notification history')),
+      sep(),
+      item(null, 'Status bar', 'Show all notification icons', chevEnd(), () => toast('Status bar'))
+    ));
+  });
+  const subDisplay = () => push('Display', b => {
+    b.appendChild(card(switchItem(I.dark, 'Dark mode', 'One UI 9 dark theme', () => state.theme === 'dark', v => { state.theme = v ? 'dark' : 'light'; applyTheme(); save(); })));
+    b.appendChild(el('div', 'oui-head', 'Brightness'));
+    b.appendChild(mkSlider(I.sun, () => state.brightness, v => { state.brightness = v; applyBrightness(); }));
+    b.appendChild(el('div', 'oui-head', 'Eye comfort'));
+    b.appendChild(card(switchItem(I.shield, 'Eye comfort shield', 'Warmer tones to help you sleep', () => state.eyeComfort, v => { state.eyeComfort = v; applyBrightness(); })));
+    b.appendChild(el('div', 'oui-head', 'Other'));
+    b.appendChild(card(
+      switchItem(I.rotate, 'Auto-rotate screen', 'Rotate with your phone', () => state.autoRotate !== false, v => { state.autoRotate = v; save(); }),
+      sep(),
+      item(I.sun, 'Screen timeout', '1 minute 30 seconds', chevEnd(), () => toast('Screen timeout'))
+    ));
+  });
+  const subWallpaper = () => push('Wallpaper', b => {
+    Object.entries(WALLPAPERS).forEach(([k, w]) => {
+      const d = el('div', 'rp');
+      d.style.cssText = `height:130px;border-radius:26px;margin:0 16px 16px;background:${w.css};position:relative;border:3px solid ${state.wallpaper === k ? 'var(--blue)' : 'transparent'};transition:border-color .25s`;
+      d.innerHTML = `<span style="position:absolute;left:18px;bottom:12px;color:#fff;font-weight:600;font-size:14px;text-shadow:0 1px 6px rgba(0,0,0,.4)">${k[0].toUpperCase() + k.slice(1)}</span>`;
+      d.onclick = () => { click(); state.wallpaper = k; applyWallpaper(); save(); subWallpaper(); toast(k[0].toUpperCase() + k.slice(1) + ' wallpaper applied'); };
+      b.appendChild(d);
+    });
+  });
+  const subAccent = () => push('Color palette', b => {
+    const wrap = el('div', 'accent-chips');
+    Object.entries(ACCENTS).forEach(([k, a]) => {
+      const c = el('button', 'accent-chip rp' + (state.accent === k ? ' on' : ''));
+      c.style.background = a.c;
+      c.setAttribute('aria-label', k);
+      c.onclick = () => { click(); state.accent = k; applyAccent(); save(); subAccent(); toast(k[0].toUpperCase() + k.slice(1) + ' accent applied'); };
+      wrap.appendChild(c);
+    });
+    b.appendChild(wrap);
+    b.appendChild(el('div', 'su-note', 'Accent colors apply to buttons, toggles and highlights across One UI, just like One UI 9 color palettes.'));
+  });
+  const subLock = () => push('Lock screen and AOD', b => {
+    b.appendChild(el('div', 'oui-head', 'Clock style'));
+    [['default', 'Default'], ['slim', 'Slim'], ['bold', 'Bold']].forEach(([k, n]) => {
+      const c = el('div', 'rp');
+      c.style.cssText = `height:150px;margin:0 16px 14px;border-radius:26px;background:${WALLPAPERS[state.wallpaper].css};display:flex;align-items:center;justify-content:center;border:3px solid ${state.clockStyle === k ? 'var(--blue)' : 'transparent'};transition:border-color .25s`;
+      c.innerHTML = `<span style="color:#fff;font-size:46px;font-weight:${k === 'slim' ? 200 : k === 'bold' ? 800 : 300};text-shadow:0 2px 10px rgba(0,0,0,.35)">9:41</span>`;
+      c.onclick = () => { click(); state.clockStyle = k; save(); buildLock(); subLock(); toast('Clock style: ' + n); };
+      b.appendChild(c);
+    });
+    b.appendChild(el('div', 'oui-head', 'Always On Display'));
+    b.appendChild(card(switchItem(I.clock, 'Always On Display', 'Show the clock while the screen is off', () => state.aod !== false, v => { state.aod = v; save(); })));
+  });
+  const pinFlow = () => {
+    const ov = el('div', 'app-frame');
+    ov.style.cssText = 'position:absolute;inset:0;background:var(--bg);z-index:4;display:flex;flex-direction:column;animation:suIn .32s var(--ease-spring)';
+    const steps = ['Enter current PIN', 'Choose a new PIN', 'Confirm new PIN'];
+    let si = state.pin ? 0 : 1, first = '', code = '', err = '';
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start;padding:0 14px';
+    const back = el('div', 'iconbtn rp', I.back);
+    back.style.cssText = 'margin:60px 14px 0 4px';
+    back.onclick = () => { click(); ov.remove(); };
+    const h = el('div', 'app-bar'); h.innerHTML = '<h1>Change PIN</h1>';
+    bar.append(back, h);
+    const title = el('div'); title.style.cssText = 'text-align:center;font-size:14.5px;font-weight:600;margin-top:26px';
+    const dots = el('div'); dots.style.cssText = 'display:flex;gap:14px;justify-content:center;margin:22px 0 8px';
+    const msg = el('div'); msg.style.cssText = 'text-align:center;color:var(--red,#e5484d);font-size:12.5px;height:18px';
+    const pad = el('div'); pad.style.cssText = 'display:grid;grid-template-columns:repeat(3,74px);gap:14px;justify-content:center;margin-top:auto;padding:0 0 46px';
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
+    const draw = () => {
+      title.textContent = steps[si];
+      dots.innerHTML = [0, 1, 2, 3].map(i => `<i style="width:12px;height:12px;border-radius:50%;background:${i < code.length ? 'var(--blue)' : 'var(--chip)'};transition:background .15s"></i>`).join('');
+      msg.textContent = err;
+    };
+    const advance = () => {
+      if (si === 0) { if (code !== state.pin) { err = 'Wrong PIN. Try again'; code = ''; draw(); return; } si = 1; code = ''; err = ''; }
+      else if (si === 1) { first = code; si = 2; code = ''; err = ''; }
+      else { if (code !== first) { err = "PINs don't match"; code = ''; draw(); return; } state.pin = first; save(); ov.remove(); toast('PIN changed'); return; }
+      draw();
+    };
+    keys.forEach(k => {
+      const btn = el('button', 'rp');
+      btn.style.cssText = `width:74px;height:74px;border-radius:50%;background:var(--card);border:none;font-size:24px;font-weight:600;color:var(--text);font-family:inherit;cursor:pointer;${k === '' ? 'visibility:hidden;background:none' : ''}`;
+      if (k === 'del') btn.innerHTML = I.backsp.replace('<svg', '<svg width="24" height="24"');
+      else if (k) btn.textContent = k;
+      btn.onclick = () => {
+        if (!k) return;
+        click();
+        if (k === 'del') code = code.slice(0, -1);
+        else if (code.length < 4) code += k;
+        if (code.length === 4 && k !== 'del') { draw(); setTimeout(advance, 140); }
+        draw();
+      };
+      pad.appendChild(btn);
+    });
+    ov.append(bar, title, dots, msg, pad);
+    draw();
+    f.appendChild(ov);
+  };
+  const subSecurity = () => push('Security and privacy', b => {
+    b.appendChild(el('div', 'oui-head', 'Lock'));
+    b.appendChild(card(
+      item(I.lock, 'Screen lock type', state.pin ? 'PIN' : 'None', chevEnd(), pinFlow),
+      sep(),
+      item(I.fp, 'Fingerprints', '2 fingerprints registered', chevEnd(), () => toast('Fingerprint settings')),
+      sep(),
+      item(I.location, 'Find My Mobile', 'On · connected', chevEnd(), () => toast('Find My Mobile'))
+    ));
+    b.appendChild(el('div', 'oui-head', 'Privacy'));
+    b.appendChild(card(
+      item(I.shield, 'Permission manager', '12 apps have permissions', chevEnd(), () => toast('Permission manager')),
+      sep(),
+      item(I.gear, 'App security', 'Auto Blocker on', chevEnd(), () => toast('App security'))
+    ));
+  });
+  const subBattery = () => push('Battery', b => {
+    b.appendChild(el('div', 'oui-head', 'Power management'));
+    b.appendChild(card(
+      switchItem(I.battery, 'Power saving', 'Limit performance and background activity', () => state.powerSaving, v => { state.powerSaving = v; save(); }),
+      sep(),
+      item(I.battery, 'Superfast charging', '45 W', chevEnd(), () => toast('Superfast charging'))
+    ));
+    b.appendChild(el('div', 'oui-head', 'Status bar'));
+    b.appendChild(card(switchItem(null, 'Show battery percentage', 'Next to the battery icon', () => state.batteryPct, v => { state.batteryPct = v; save(); renderStatusIcons(); })));
+  });
+  const subDW = () => push('Digital Wellbeing', b => {
+    b.appendChild(el('div', 'oui-head', 'Screen time this week'));
+    const bars = el('div', 'dw-bars');
+    const data = [3.2, 4.8, 2.9, 5.6, 6.4, 7.8, 4.1];
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    data.forEach((h, i) => {
+      const d = el('div', 'db');
+      d.innerHTML = `<i style="height:${Math.round(h / 8 * 100)}%;animation-delay:${i * .06}s"></i><span>${days[i]}</span>`;
+      bars.appendChild(d);
+    });
+    b.appendChild(bars);
+    b.appendChild(el('div', 'su-note', 'Today: 4h 6m — 12% less than last week. Wind Down starts at 11 PM.'));
+    b.appendChild(el('div', 'oui-head', 'App timers'));
+    b.appendChild(card(
+      item(null, 'Play Store', '1h 20m today', chevEnd(), () => toast('App timer set')),
+      sep(),
+      item(null, 'Internet', '48m today', chevEnd(), () => toast('App timer set')),
+      sep(),
+      item(null, 'Games', '2h 05m today', chevEnd(), () => toast('App timer set'))
+    ));
+  });
+  const subUpdate = () => push('Software update', b => {
+    const c = el('div', 'oui-card');
+    c.style.cssText = 'margin:8px 16px;padding:30px 22px;text-align:center';
+    c.innerHTML = `<div style="width:66px;height:66px;margin:0 auto 14px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;color:var(--blue)">${I.down.replace('<svg', '<svg width="30" height="30"')}</div>
+      <div style="font-weight:700;font-size:16px">One UI 9</div>
+      <div style="color:var(--text2);font-size:13px;margin-top:4px">Current version: UP1A.250705.001</div>`;
+    const prog = el('div');
+    prog.style.cssText = 'height:6px;border-radius:3px;background:var(--chip);margin:20px 30px 0;overflow:hidden;opacity:0;transition:opacity .3s';
+    prog.innerHTML = '<div style="height:100%;width:0;background:var(--blue);transition:width .25s linear"></div>';
+    const btn = el('button', 'btn');
+    btn.style.cssText = 'display:block;margin:20px 30px 0;width:calc(100% - 60px)';
+    btn.textContent = 'Check for updates';
+    btn.onclick = () => {
+      click();
+      btn.disabled = true; btn.textContent = 'Checking\u2026';
+      prog.style.opacity = '1';
+      let p = 0;
+      const iv = setInterval(() => {
+        p += 7 + Math.random() * 12;
+        prog.firstChild.style.width = Math.min(p, 100) + '%';
+        if (p >= 100) {
+          clearInterval(iv);
+          setTimeout(() => {
+            prog.style.opacity = '0';
+            btn.textContent = 'Your software is up to date';
+            btn.disabled = false;
+            toast('Software is up to date');
+          }, 500);
+        }
+      }, 220);
+    };
+    b.append(c, prog, btn);
+    b.appendChild(el('div', 'su-note', 'Your phone is already running the latest One UI 9 version.'));
+  });
+  const subAbout = () => push('About phone', b => {
+    b.appendChild(el('div', 'oui-head', 'Device information'));
+    b.appendChild(card(
+      item(null, 'Model name', null, 'Galaxy S26 Ultra'),
+      sep(), item(null, 'One UI version', null, 'One UI 9.0'),
+      sep(), item(null, 'Android version', null, 'Android 17'),
+      sep(), item(null, 'Processor', null, 'Snapdragon 8 Elite Gen 3'),
+      sep(), item(null, 'Display', null, '6.9" QHD+ AMOLED 2X'),
+      sep(), item(null, 'Camera', null, '200 MP'),
+      sep(), item(null, 'Battery', null, '5,200 mAh'),
+      sep(), item(null, 'Build number', null, 'UP1A.250705.001')
+    ));
+    b.appendChild(el('div', 'su-note', 'One UI 9 web edition — a fan-made recreation. Not affiliated with Samsung Electronics.'));
+  });
+  renderMain();
+};
+
+/* ---- Phone ---- */
+appById('phone').build = (f) => {
+  f.append(appBar('Phone'));
+  const tabs = el('div', 'seg'); tabs.innerHTML = `<button class="on">Keypad</button><button>Recent</button><button>Contacts</button>`;
+  const out = el('div', 'dial-out');
+  out.innerHTML = `<div class="dial-num" id="dial-num"></div><div class="dial-sub" id="dial-sub">Enter a number</div>`;
+  const pad = el('div', 'dialpad');
+  const keys = [['1', ''], ['2', 'ABC'], ['3', 'DEF'], ['4', 'GHI'], ['5', 'JKL'], ['6', 'MNO'], ['7', 'PQRS'], ['8', 'TUV'], ['9', 'WXYZ'], ['✳', ''], ['0', '+'], ['#', '']];
+  keys.forEach(([k, s]) => {
+    const b = el('button', 'rp', `${k}${s ? `<small>${s}</small>` : ''}`);
+    b.onclick = () => { click(); num += k; draw(); };
+    pad.appendChild(b);
+  });
+  let num = '';
+  const draw = () => {
+    const eln = f.querySelector('#dial-num'), els = f.querySelector('#dial-sub');
+    eln.textContent = num;
+    els.textContent = num.length >= 10 ? 'Galaxy user · Mobile' : num.length ? '' : 'Enter a number';
+  };
+  const cta = el('div', 'dial-cta');
+  const call = el('div', 'callb rp', I.phone.replace('<svg', '<svg width="30" height="30" fill="#fff"'));
+  call.onclick = () => {
+    if (!num) { num = '2015550134'; draw(); }
+    click(); showCall(num);
+  };
+  const del = el('div', 'delb rp', I.backsp);
+  del.onclick = () => { click(); num = num.slice(0, -1); draw(); };
+  cta.append(del, call);
+  f.append(tabs, out, pad, cta);
+};
+function showCall(num) {
+  const cs = $('#callscreen');
+  const pretty = num.length === 10 ? `${num.slice(0, 3)}-${num.slice(3, 6)}-${num.slice(6)}` : num;
+  cs.innerHTML = `
+    <div class="cs-av">G</div><div class="cs-n">${pretty}</div><div class="cs-s" id="cs-s">Calling…</div>
+    <div class="cs-actions">
+      <button><span class="pmi">${I.mute}</span>Mute</button>
+      <button><span class="pmi">${I.globe}</span>Speaker</button>
+      <button><span class="pmi">${I.fp}</span>Keypad</button>
+      <button class="end" id="cs-end"><span class="pmi">${I.phone.replace('<svg', '<svg width="26" height="26" fill="#fff" style="transform:rotate(135deg)"')}</span>End</button>
+    </div>`;
+  cs.classList.add('on');
+  let t = 0;
+  const iv = setInterval(() => {
+    t++;
+    const s = cs.querySelector('#cs-s');
+    if (s) s.textContent = t < 3 ? 'Calling…' : `${Math.floor((t - 2) / 60)}:${String((t - 2) % 60).padStart(2, '0')}`;
+  }, 1000);
+  cs.querySelector('#cs-end').onclick = () => { click(); clearInterval(iv); cs.classList.remove('on'); toast('Call ended'); };
+}
+
+/* ---- Messages ---- */
+const CHATS = [
+  { name: 'Jordan', avatar: '#57a0ff', msgs: [['them', 'Are we still on for tonight?'], ['them', 'The 8pm show at the Regal'], ['me', 'Yes! Grabbing tickets now'], ['them', 'Perfect, see you there 🎬']] },
+  { name: 'Mom', avatar: '#f97316', msgs: [['them', 'Did you eat?'], ['me', 'Yes mom 😄'], ['them', 'Call me when you can']] },
+  { name: 'Dev team', avatar: '#0aa06e', msgs: [['them', 'One UI 9 build is green ✅'], ['me', 'Shipping it']] },
+  { name: 'Alex', avatar: '#8b5cf6', msgs: [['them', 'Check out this new DeX setup'], ['them', 'image.jpg']] },
+];
+appById('messages').build = (f) => {
+  f.append(appBar('Messages', `${CHATS.length} conversations`));
+  const sc = el('div', 'app-scroll'); sc.style.padding = '6px 0 80px';
+  f.appendChild(sc);
+  const list = () => {
+    sc.innerHTML = '';
+    CHATS.forEach(c => {
+      const d = el('div', 'oui-item rp');
+      const last = c.msgs[c.msgs.length - 1];
+      d.innerHTML = `<span class="ni" style="width:46px;height:46px;border-radius:50%;background:${c.avatar};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex:none">${c.name[0]}</span>
+        <div class="oi-main"><div class="oi-t">${c.name}</div><div class="oi-s">${last[1].slice(0, 40)}</div></div>`;
+      d.onclick = () => openChat(c);
+      sc.appendChild(d);
+      if (c !== CHATS[CHATS.length - 1]) sc.appendChild(sep());
+    });
+  };
+  const openChat = (c) => {
+    const chat = el('div', 'app-frame');
+    chat.style.cssText = 'position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:2';
+    chat.style.animation = 'suIn .3s var(--ease-spring)';
+    const bar = el('div');
+    bar.style.cssText = 'flex:none;display:flex;align-items:center;gap:12px;padding:52px 14px 10px';
+    bar.innerHTML = `<div class="iconbtn rp" id="ch-back">${I.back}</div>
+      <span style="width:38px;height:38px;border-radius:50%;background:${c.avatar};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">${c.name[0]}</span>
+      <div><div style="font-weight:700">${c.name}</div><div style="font-size:11.5px;color:var(--text2)">Active now</div></div>`;
+    const msgs = el('div', 'app-scroll chat');
+    const drawMsgs = () => {
+      msgs.innerHTML = '';
+      c.msgs.forEach(([who, m]) => {
+        const b = el('div', 'bub ' + (who === 'me' ? 'me' : 'them'), m);
+        msgs.appendChild(b);
+      });
+      msgs.scrollTop = msgs.scrollHeight;
+    };
+    const input = el('div', 'chat-input');
+    input.innerHTML = `<input placeholder="Message" id="ch-in"><button class="sendb rp" id="ch-send">${I.send}</button>`;
+    chat.append(bar, msgs, input);
+    f.appendChild(chat);
+    bar.querySelector('#ch-back').onclick = () => { click(); chat.style.animation = 'suInBack .3s var(--ease-spring)'; setTimeout(() => chat.remove(), 280); };
+    const send = () => {
+      const inp = input.querySelector('#ch-in');
+      const v = inp.value.trim(); if (!v) return;
+      click();
+      c.msgs.push(['me', v]); inp.value = ''; drawMsgs();
+      const ty = el('div', 'typing', '<i></i><i></i><i></i>');
+      msgs.appendChild(ty); msgs.scrollTop = msgs.scrollHeight;
+      setTimeout(() => {
+        ty.remove();
+        const replies = ['Sounds good!', 'On my way', 'Haha yes 😄', 'Let me check', 'One UI 9 looks amazing', 'Can you send details?'];
+        c.msgs.push(['them', replies[Math.floor(Math.random() * replies.length)]]);
+        drawMsgs(); pop(920);
+        if (c.name === 'Jordan') pushNotif({ app: 'messages', title: c.name, body: c.msgs[c.msgs.length - 1][1], color: 'linear-gradient(160deg,#57a0ff,#1b6ef3)', icon: I.msg });
+      }, 1800);
+    };
+    input.querySelector('#ch-send').onclick = send;
+    input.querySelector('#ch-in').onkeydown = e => { if (e.key === 'Enter') send(); };
+    drawMsgs();
+  };
+  list();
+};
+
+/* ---- Contacts ---- */
+const CONTACTS = [['Alex Rivera', '+1 201 555 0134', '#57a0ff'], ['Ava Chen', '+1 201 555 0198', '#f97316'], ['Dev Team', 'group · 12 members', '#0aa06e'], ['Jordan Blake', '+1 201 555 0176', '#8b5cf6'], ['Mom', '+1 973 555 0110', '#e11d48'], ['Sam Wilson', '+1 212 555 0155', '#0ca678']];
+appById('contacts').build = (f) => {
+  f.append(appBar('Contacts'));
+  const sc = el('div', 'app-scroll'); sc.style.padding = '6px 0 80px';
+  f.appendChild(sc);
+  const c = card();
+  CONTACTS.forEach(([n, p, col], i) => {
+    const d = el('div', 'oui-item rp');
+    d.innerHTML = `<span style="width:44px;height:44px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">${n[0]}</span>
+      <div class="oi-main"><div class="oi-t">${n}</div><div class="oi-s">${p}</div></div>
+      <span class="oi-end">${I.phone.replace('<svg', '<svg width="18" height="18" fill="var(--blue)"')}</span>`;
+    d.onclick = () => { click(); showCall(p.replace(/[^0-9]/g, '')); };
+    c.appendChild(d);
+    if (i < CONTACTS.length - 1) c.appendChild(sep());
+  });
+  sc.appendChild(c);
+};
+
+/* ---- Internet (browser) ---- */
+const SITES = {
+  'samsung.com': { title: 'Samsung — One UI 9', hero: '#1b6ef3', body: 'One UI 9 — Flow more smoothly with multi-window views, Now Brief cards, and a redesigned Quick Panel.' },
+  'perplexity.ai': { title: 'Perplexity', hero: '#20b8cd', body: 'Where knowledge begins. Ask anything and get cited answers in seconds.' },
+  'youtube.com': { title: 'YouTube', hero: '#ff0033', body: 'Watch, share and discover. The best of the web, one video at a time.' },
+  'wikipedia.org': { title: 'Wikipedia', hero: '#6b7280', body: 'The free encyclopedia that anyone can edit.' },
+};
+appById('internet').build = (f) => {
+  const bar = el('div', 'br-bar');
+  bar.innerHTML = `<div class="iconbtn rp" id="br-back">${I.back}</div><div class="url rp" id="br-url">${I.lock.replace('<svg', '<svg width="13" height="13" fill="var(--text2)"')}<span>samsung.com/one-ui</span></div><div class="iconbtn rp">${I.plus}</div>`;
+  const view = el('div', 'app-scroll');
+  const renderHome = () => {
+    bar.querySelector('#br-url span').textContent = 'Search or type URL';
+    view.innerHTML = `<div class="br-dial">${Object.entries(SITES).map(([host, s]) => `
+      <button class="br-tile rp" data-host="${host}"><span class="bt-ic" style="background:${s.hero}">${I.globe.replace('<svg', '<svg width="26" height="26" fill="#fff"')}</span>${s.title.split('—')[0].trim()}</button>`).join('')}
+      </div>`;
+    view.querySelectorAll('.br-tile').forEach(t => t.onclick = () => visit(t.dataset.host));
+  };
+  const visit = (host) => {
+    click();
+    const s = SITES[host]; if (!s) { toast('Page not available in demo'); return; }
+    bar.querySelector('#br-url span').textContent = host;
+    view.innerHTML = `<div style="background:${s.hero};color:#fff;padding:46px 28px;font-size:24px;font-weight:700">${s.title}</div>
+      <div style="padding:26px 28px;font-size:15px;line-height:1.7;color:var(--text)">${s.body}</div>
+      <div style="padding:0 28px"><div class="oui-card"><div class="oui-item"><span class="oi-ic">${I.globe}</span><div class="oi-main"><div class="oi-t">Related</div><div class="oi-s">More from ${host}</div></div></div></div></div>`;
+  };
+  bar.querySelector('#br-back').onclick = () => { click(); renderHome(); };
+  f.append(bar, view);
+  renderHome();
+};
+
+/* ---- Camera ---- */
+appById('camera').build = (f) => {
+  f.style.background = '#000';
+  const wrap = el('div', 'cam-wrap');
+  const scene = el('div', 'cam-scene');
+  // procedural "viewfinder": animated gradient skyline
+  scene.style.background = `linear-gradient(180deg,#0e1a33 0%,#24406e 45%,#0b7285 70%,#085a6b 100%)`;
+  scene.innerHTML = `<div style="position:absolute;inset:0;background:radial-gradient(60% 40% at 70% 20%,rgba(255,210,120,.45),transparent 60%)"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:34%;background:#05070c;clip-path:polygon(0 60%,10% 60%,10% 30%,18% 30%,18% 75%,26% 75%,26% 20%,33% 20%,33% 55%,45% 55%,45% 35%,55% 35%,55% 70%,63% 70%,63% 25%,72% 25%,72% 60%,82% 60%,82% 40%,92% 40%,92% 65%,100% 65%,100% 100%,0 100%)"></div>`;
+  const ui = el('div', 'cam-ui');
+  const modes = el('div', 'cam-modes', `<span class="on">PHOTO</span><span>VIDEO</span><span>PORTRAIT</span><span>NIGHT</span>`);
+  modes.querySelectorAll('span').forEach(s => s.onclick = () => { click(); modes.querySelectorAll('span').forEach(x => x.classList.remove('on')); s.classList.add('on'); });
+  ui.innerHTML = `
+    <div class="cam-top">
+      <button class="iconbtn rp" id="cam-flash" style="color:#fff">${I.flash}</button>
+      <button class="iconbtn rp" style="color:#fff">${I.gear}</button>
+    </div>`;
+  ui.appendChild(modes);
+  ui.insertAdjacentHTML('beforeend', `
+    <div class="cam-bottom">
+      <button class="iconbtn rp" style="width:54px;height:54px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff" id="cam-gallery">${I.gallery.replace('<svg', '<svg width="24" height="24"')}</button>
+      <button class="shutter rp" id="cam-shutter"></button>
+      <button class="iconbtn rp" style="width:54px;height:54px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff" id="cam-flip">${I.rotate}</button>
+    </div>`);
+  const flash = el('div', 'cam-flash');
+  wrap.append(scene, flash, ui);
+  f.appendChild(wrap);
+  ui.querySelector('#cam-shutter').onclick = () => {
+    click();
+    flash.classList.add('go'); setTimeout(() => flash.classList.remove('go'), 400);
+    // capture procedural photo
+    const cv = document.createElement('canvas'); cv.width = 400; cv.height = 400;
+    const ctx = cv.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, 0, 400);
+    g.addColorStop(0, '#0e1a33'); g.addColorStop(.5, '#24406e'); g.addColorStop(.8, '#0b7285'); g.addColorStop(1, '#085a6b');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 400, 400);
+    const rg = ctx.createRadialGradient(280, 70, 10, 280, 70, 160);
+    rg.addColorStop(0, 'rgba(255,210,120,.8)'); rg.addColorStop(1, 'rgba(255,210,120,0)');
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, 400, 400);
+    ctx.fillStyle = '#05070c';
+    ctx.beginPath(); ctx.moveTo(0, 340);
+    [[40, 220], [90, 300], [140, 180], [200, 280], [250, 160], [310, 300], [360, 200]].forEach(([x, y]) => { ctx.lineTo(x, 400); ctx.lineTo(x, y); });
+    ctx.lineTo(400, 340); ctx.lineTo(400, 400); ctx.closePath(); ctx.fill();
+    state.photos.unshift(cv.toDataURL('image/jpeg', .7));
+    state.photos = state.photos.slice(0, 24); save();
+    toast('Photo saved to Gallery');
+    pop(1400);
+  };
+  ui.querySelector('#cam-gallery').onclick = () => { click(); openApp('gallery'); };
+  ui.querySelector('#cam-flip').onclick = () => { click(); toast('Front camera'); };
+};
+
+/* ---- Gallery ---- */
+appById('gallery').build = (f) => {
+  f.append(appBar('Gallery', 'Albums'));
+  const sc = el('div', 'app-scroll');
+  const grid = el('div', 'gal-grid');
+  const seedArts = () => {
+    if (state.photos.length) return;
+    const palettes = [['#3b5bdb', '#7048e8', '#0b7285'], ['#ff922b', '#e64980', '#5f3dc4'], ['#2b8a3e', '#0ca678', '#1864ab'], ['#ffd166', '#f472b6', '#c084fc'], ['#0ea5e9', '#6366f1', '#0f172a'], ['#f97316', '#ef4444', '#7c3aed']];
+    palettes.forEach(p => {
+      const cv = document.createElement('canvas'); cv.width = 300; cv.height = 300;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = p[2]; ctx.fillRect(0, 0, 300, 300);
+      p.forEach((c, i) => {
+        ctx.beginPath(); ctx.fillStyle = c;
+        ctx.arc(60 + i * 55 + (i % 2) * 40, 90 + (i % 3) * 70, 70 - i * 8, 0, 7); ctx.fill();
+      });
+      state.photos.push(cv.toDataURL('image/jpeg', .7));
+    });
+  };
+  seedArts(); save();
+  state.photos.forEach((src, i) => {
+    const d = el('div', 'ph rp');
+    const img = new Image(); img.src = src; img.draggable = false;
+    d.appendChild(img);
+    d.onclick = () => {
+      click();
+      const pv = $('#photoview');
+      pv.innerHTML = `<div class="pv-bar"><div class="iconbtn rp" id="pv-x" style="color:#fff">${I.back}</div></div>`;
+      const im = new Image(); im.src = src; pv.appendChild(im);
+      pv.classList.add('on');
+      pv.querySelector('#pv-x').onclick = () => pv.classList.remove('on');
+    };
+    grid.appendChild(d);
+  });
+  sc.appendChild(grid);
+  f.appendChild(sc);
+};
+
+/* ---- Clock ---- */
+appById('clock').build = (f) => {
+  f.append(appBar('Clock'));
+  const seg = el('div', 'seg');
+  seg.innerHTML = `<button class="on">Alarm</button><button>World</button><button>Stopwatch</button><button>Timer</button>`;
+  const body = el('div', 'app-scroll'); body.style.padding = '6px 0 90px';
+  f.append(seg, body);
+  const views = {
+    Alarm: () => {
+      body.innerHTML = `<div class="clock-face"><div class="cf-t">9:41</div><div class="cf-d"></div></div>`;
+      const c = card();
+      state.alarms.forEach((a, i) => {
+        const d = el('div', 'alarm-row rp');
+        d.innerHTML = `<div style="flex:1"><div class="at" style="${a.on ? '' : 'color:var(--text2)'}">${a.t}</div><div class="al">${a.l}</div></div>`;
+        const sw = el('div', 'switch rp' + (a.on ? ' on' : ''));
+        sw.onclick = () => { click(); a.on = !a.on; save(); views.Alarm(); };
+        d.appendChild(sw);
+        c.appendChild(d);
+        if (i < state.alarms.length - 1) c.appendChild(sep());
+      });
+      body.appendChild(c);
+      body.insertAdjacentHTML('beforeend', `<div style="text-align:center;padding:18px;color:var(--text2);font-size:12.5px">Tap + in the real One UI to add alarms</div>`);
+      tickClock();
+    },
+    World: () => {
+      body.innerHTML = '';
+      const zones = [['Irvington', 'America/New_York'], ['London', 'Europe/London'], ['Seoul', 'Asia/Seoul'], ['Tokyo', 'Asia/Tokyo'], ['Dubai', 'Asia/Dubai']];
+      const c = card();
+      zones.forEach(([city, tz], i) => {
+        const now = new Date().toLocaleString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit' });
+        const day = new Date().toLocaleString('en-US', { timeZone: tz, weekday: 'short' });
+        const d = el('div', 'alarm-row');
+        d.innerHTML = `<div style="flex:1"><div class="at">${now}</div><div class="al">${city} · ${day}</div></div>`;
+        c.appendChild(d);
+        if (i < zones.length - 1) c.appendChild(sep());
+      });
+      body.appendChild(c);
+    },
+    Stopwatch: () => {
+      body.innerHTML = `<div class="clock-face"><div class="cf-t" id="sw-t" data-live="0">00:00.0</div><div class="cf-d">Stopwatch</div></div>
+        <div style="display:flex;gap:14px;justify-content:center;padding:22px 0">
+          <button class="btn rp" id="sw-go" style="flex:none;width:130px">Start</button>
+          <button class="btn ghost rp" id="sw-rst" style="flex:none;width:130px">Reset</button>
+        </div>`;
+      let t0 = null, iv = null;
+      const fmt = ms => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}.${Math.floor(ms / 100) % 10}`;
+      body.querySelector('#sw-go').onclick = function () {
+        click();
+        if (iv) { clearInterval(iv); iv = null; this.textContent = 'Start'; this.classList.add('ghost'); return; }
+        this.textContent = 'Stop'; this.classList.remove('ghost');
+        t0 = Date.now() - (t0 || 0);
+        iv = setInterval(() => { t0 = Date.now() - t0; body.querySelector('#sw-t').textContent = fmt(t0); }, 100);
+      };
+      body.querySelector('#sw-rst').onclick = () => { click(); if (iv) { clearInterval(iv); iv = null; } t0 = 0; body.querySelector('#sw-t').textContent = '00:00.0'; const g = body.querySelector('#sw-go'); g.textContent = 'Start'; g.classList.add('ghost'); };
+    },
+    Timer: () => {
+      body.innerHTML = `<div class="clock-face"><div class="cf-t" id="tm-t" data-live="0">00:30</div><div class="cf-d">Timer</div></div>
+        <div style="display:flex;gap:14px;justify-content:center;padding:22px 0">
+          <button class="btn rp" id="tm-go" style="flex:none;width:130px">Start</button>
+        </div>`;
+      let left = 30, iv = null;
+      const t = body.querySelector('#tm-t');
+      const draw = () => t.textContent = `00:${String(left).padStart(2, '0')}`;
+      body.querySelector('#tm-go').onclick = function () {
+        click();
+        if (iv) { clearInterval(iv); iv = null; this.textContent = 'Start'; return; }
+        this.textContent = 'Pause';
+        iv = setInterval(() => {
+          left--; draw();
+          if (left <= 0) { clearInterval(iv); iv = null; pop(1000); toast('Timer finished'); }
+        }, 1000);
+      };
+      draw();
+    },
+  };
+  seg.querySelectorAll('button').forEach(b => b.onclick = () => {
+    click();
+    seg.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    views[b.textContent]();
+  });
+  views.Alarm();
+};
+
+/* ---- Calendar ---- */
+appById('calendar').build = (f) => {
+  f.append(appBar('Calendar', `${MON[10]} 2026`));
+  const sc = el('div', 'app-scroll'); sc.style.padding = '0 0 90px';
+  const grid = el('div', 'cal-grid');
+  const dows = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  dows.forEach(d => grid.appendChild(el('div', 'dow', d)));
+  const now = new Date();
+  const first = new Date(2026, 10, 1).getDay();
+  const days = 30;
+  const events = { 7: 2, 14: 1, 21: 1, 26: 2, 28: 1 };
+  for (let i = 0; i < first; i++) grid.appendChild(el('div', 'cd dim', ''));
+  for (let d = 1; d <= days; d++) {
+    const c = el('div', 'cd rp' + (d === now.getDate() && now.getMonth() === 10 ? ' today' : ''));
+    c.innerHTML = `${d}${events[d] ? `<span class="evdot"></span>` : ''}`;
+    c.onclick = () => { click(); toast(`${MON[10]} ${d}, 2026 — ${events[d] ? events[d] + ' event' + (events[d] > 1 ? 's' : '') : 'no events'}`); };
+    grid.appendChild(c);
+  }
+  sc.appendChild(grid);
+  sc.insertAdjacentHTML('beforeend', `
+    <div class="oui-head">Today</div>
+    <div class="oui-card">
+      <div class="oui-item"><span class="oi-ic" style="color:#1b6ef3">${I.cal}</span><div class="oi-main"><div class="oi-t">One UI 9 review</div><div class="oi-s">10:00 AM · 1h</div></div></div>
+      ${'<div class="oui-sep"></div>'}
+      <div class="oui-item"><span class="oi-ic" style="color:#e11d48">${I.heart}</span><div class="oi-main"><div class="oi-t">Gym</div><div class="oi-s">6:30 PM · 45m</div></div></div>
+    </div>`);
+  f.appendChild(sc);
+};
+
+/* ---- Calculator ---- */
+appById('calculator').build = (f) => {
+  const out = el('div', 'calc-out');
+  let cur = '0', hist = '', reset = false;
+  const disp = out;
+  const draw = () => { disp.innerHTML = `<div class="calc-hist">${hist}</div><div class="calc-cur">${cur}</div>`; };
+  const keys = ['C', '( )', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '−', '1', '2', '3', '+', '±', '0', '.', '='];
+  const grid = el('div', 'calc-grid');
+  keys.forEach(k => {
+    const b = el('button', 'rp' + (['÷', '×', '−', '+', '%', '( )'].includes(k) ? ' op' : '') + (k === '=' ? ' eq' : ''));
+    b.textContent = k;
+    b.onclick = () => {
+      click();
+      if (k === 'C') { cur = '0'; hist = ''; }
+      else if (k === '=') {
+        try {
+          const expr = cur.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/%/g, '/100');
+          const r = Function('"use strict";return (' + expr + ')')();
+          hist = cur + ' ='; cur = String(Math.round(r * 1e8) / 1e8); reset = true;
+        } catch (e) { cur = 'Error'; }
+      } else if (k === '±') cur = String(-parseFloat(cur));
+      else {
+        if (reset && /[0-9.]/.test(k)) { cur = k; reset = false; }
+        else if (cur === '0' && /[0-9.]/.test(k)) cur = k;
+        else cur += k;
+        if (/[÷×−+]/.test(k)) reset = false;
+      }
+      draw();
+    };
+    grid.appendChild(b);
+  });
+  f.append(out, grid);
+  draw();
+};
+
+/* ---- Notes ---- */
+appById('notes').build = (f) => {
+  f.append(appBar('Notes', `${state.notes.length} notes · Samsung Cloud`));
+  const sc = el('div', 'app-scroll'); sc.style.padding = '4px 0 90px';
+  f.appendChild(sc);
+  const render = () => {
+    sc.innerHTML = '';
+    const c = card();
+    if (!state.notes.length) c.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text2);font-size:13.5px">No notes yet</div>';
+    state.notes.forEach((n, i) => {
+      const d = el('div', 'note-row rp');
+      d.innerHTML = `<span style="width:38px;height:38px;border-radius:12px;background:linear-gradient(160deg,#ffd66b,#f5a623);display:flex;align-items:center;justify-content:center;flex:none">${I.note.replace('<svg', '<svg width="19" height="19" fill="#7a4d00"')}</span>
+        <div style="flex:1;min-width:0"><div style="font-weight:600">${n.t || 'Untitled'}</div><div class="nprev">${(n.b || '').replace(/\n/g, ' ')}</div></div>`;
+      d.onclick = () => openNote(i);
+      c.appendChild(d);
+      if (i < state.notes.length - 1) c.appendChild(sep());
+    });
+    sc.appendChild(c);
+  };
+  const openNote = (i) => {
+    const ed = el('div', 'note-edit on');
+    ed.innerHTML = `<div style="display:flex;align-items:center;padding:52px 12px 6px"><div class="iconbtn rp" id="n-back">${I.back}</div><div class="iconbtn rp" id="n-save" style="color:var(--blue)">${I.check}</div></div>
+      <input value="${state.notes[i].t || ''}" placeholder="Title" id="n-t"><textarea placeholder="Start writing…" id="n-b">${state.notes[i].b || ''}</textarea>`;
+    f.appendChild(ed);
+    ed.querySelector('#n-back').onclick = () => { click(); ed.remove(); render(); };
+    ed.querySelector('#n-save').onclick = () => {
+      click();
+      state.notes[i] = { t: ed.querySelector('#n-t').value, b: ed.querySelector('#n-b').value };
+      save(); ed.remove(); render(); toast('Note saved');
+    };
+  };
+  render();
+};
+
+/* ---- Weather ---- */
+appById('weather').build = (f) => {
+  f.style.background = 'linear-gradient(180deg,#1d4e8f,#0c2340)';
+  f.style.color = '#fff';
+  f.append(appBar('Weather', 'Irvington, New Jersey'));
+  const sc = el('div', 'app-scroll');
+  sc.innerHTML = `
+    <div class="wx-hero"><div class="wt">18°</div><div class="wc">Cloudy</div><div class="wl">Feels like 16° · H 21° L 11°</div></div>
+    <div class="oui-card" style="background:rgba(255,255,255,.12);margin:0 16px 16px">
+      <div class="wx-hours">${[['Now', '18°'], ['1 PM', '19°'], ['2 PM', '20°'], ['3 PM', '20°'], ['4 PM', '19°'], ['5 PM', '18°'], ['6 PM', '16°']].map(([h, t]) => `<div class="wh" style="background:rgba(255,255,255,.1)"><div style="opacity:.8;font-size:10.5px">${h}</div><div style="margin:8px 0">${I.cloud.replace('<svg', '<svg width="22" height="22" fill="rgba(255,255,255,.85)"')}</div><div style="font-weight:600">${t}</div></div>`).join('')}</div>
+    </div>
+    <div class="oui-card" style="background:rgba(255,255,255,.12);margin:0 16px">
+      ${[['Today', 'Cloudy', '21°', '11°'], ['Sunday', 'Rain', '17°', '9°'], ['Monday', 'Sunny', '19°', '8°'], ['Tuesday', 'Cloudy', '18°', '10°'], ['Wednesday', 'Sunny', '20°', '11°']].map(([d, c, h, l], i) => `<div class="oui-item" style="color:#fff"><div class="oi-main" style="display:flex;align-items:center;gap:16px"><span style="width:86px">${d}</span>${I[c === 'Sunny' ? 'sun' : c === 'Rain' ? 'cloud' : 'cloud'].replace('<svg', `<svg width="20" height="20" fill="rgba(255,255,255,.85)"`)}</div><span class="oi-end" style="color:rgba(255,255,255,.7)">${l}° / <b style="color:#fff">${h}°</b></span></div>${i < 4 ? '<div class="oui-sep" style="background:rgba(255,255,255,.1)"></div>' : ''}</div>`).join('')}
+    </div>`;
+  sc.style.paddingBottom = '100px';
+  f.appendChild(sc);
+};
+
+/* ---- My Files ---- */
+appById('files').build = (f) => {
+  f.append(appBar('My Files', 'Internal storage · 178 GB free'));
+  const sc = el('div', 'app-scroll'); sc.style.padding = '4px 0 90px';
+  const folders = [['Images', '2,431 items · 18.2 GB', I.gallery, '#1b6ef3'], ['Videos', '312 items · 64.1 GB', I.camera, '#d5458b'], ['Audio', '1,204 items · 9.4 GB', I.sound, '#0aa06e'], ['Documents', '288 items · 2.1 GB', I.note, '#f5a623'], ['Downloads', '46 items · 3.3 GB', I.down, '#8b5cf6']];
+  const c = card();
+  folders.forEach(([n, s, ic, col], i) => {
+    c.appendChild(item(`<span style="color:${col}">${ic}</span>`, n, s, '', () => toast(n + ' — demo folder')));
+    if (i < folders.length - 1) c.appendChild(sep());
+  });
+  sc.appendChild(c);
+  f.appendChild(sc);
+};
+
+/* ---- Galaxy Store ---- */
+appById('store').build = (f) => {
+  f.append(appBar('Galaxy Store'));
+  const sc = el('div', 'app-scroll'); sc.style.padding = '4px 0 90px';
+  const appsList = [['Good Lock', 'Customize One UI 9 — themes, modules', '4.5 ★'], ['Samsung Health', 'Redesigned in One UI 9', '4.7 ★'], ['Samsung Notes', 'Tape tool and more', '4.6 ★'], ['SmartThings', 'Connected home', '4.3 ★']];
+  sc.innerHTML = `
+    <div style="margin:8px 16px 16px;border-radius:28px;padding:30px 26px;background:linear-gradient(135deg,#5b21b6,#8b5cf6);color:#fff;position:relative;overflow:hidden">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;opacity:.8">FEATURED</div>
+      <div style="font-size:23px;font-weight:800;margin-top:8px">One UI 9 Essentials</div>
+      <div style="font-size:13px;opacity:.85;margin-top:6px;line-height:1.5">Apps and themes updated for the newest One UI</div>
+      <button class="btn rp" style="margin-top:18px;width:130px;flex:none;background:#fff;color:#5b21b6">Get the picks</button>
+    </div>
+    <div class="oui-head">Top apps</div>
+    <div class="oui-card">${appsList.map(([n, d, r], i) => `<div class="oui-item rp" onclick="void 0"><span class="ni" style="width:46px;height:46px;border-radius:15px;background:linear-gradient(160deg,#8b5cf6,#4f46e5);display:flex;align-items:center;justify-content:center;color:#fff">${I.store.replace('<svg', '<svg width="22" height="22"')}</span>
+      <div class="oi-main"><div class="oi-t">${n}</div><div class="oi-s">${d}</div></div><span class="oi-end" style="color:var(--blue);font-weight:600">Install</span></div>${i < appsList.length - 1 ? '<div class="oui-sep"></div>' : ''}`).join('')}</div>`;
+  sc.querySelectorAll('.oi-end').forEach((b, i) => b.onclick = () => { click(); b.textContent = 'Open'; toast(appsList[i][0] + ' installed'); });
+  f.appendChild(sc);
+};
+
+/* ---- Health ---- */
+/* ---- Play Store ---- */
+const PS_GRADS = [
+  'linear-gradient(160deg,#6ea8ff,#1b6ef3)', 'linear-gradient(160deg,#b48cf5,#7c3aed)', 'linear-gradient(160deg,#f9a8d4,#ec4899)',
+  'linear-gradient(160deg,#6ee7b7,#0d9488)', 'linear-gradient(160deg,#fcd34d,#f59e0b)', 'linear-gradient(160deg,#fca5a5,#ef4444)',
+  'linear-gradient(160deg,#93c5fd,#3b82f6)', 'linear-gradient(160deg,#a5b4fc,#6366f1)', 'linear-gradient(160deg,#86efac,#22c55e)',
+  'linear-gradient(160deg,#5eead4,#14b8a6)', 'linear-gradient(160deg,#fdba74,#f97316)', 'linear-gradient(160deg,#c4b5fd,#8b5cf6)',
+  'linear-gradient(160deg,#9aa3b2,#4b5563)', 'linear-gradient(160deg,#7dd3fc,#0ea5e9)',
+];
+const PS_DEVS = ['Lumen Labs', 'Nova Interactive', 'Pixel Forge', 'Brightside', 'Kite Studio', 'Orbit Soft', 'Cobalt Works', 'Maple Media', 'Foxglove', 'Zephyr Games', 'Bluepine', 'Tandem Digital'];
+const PS_CATS = {
+  'Games': ['Aether Quest', 'Brick Blitz', 'Castle Craft', 'Drift Legends', 'Ember Isles', 'Frost Runners', 'Galaxy Patrol', 'Harbor Tycoon', 'Island Mystery', 'Jelly Jump', "Knight's Vow", 'Lumen Path', 'Mech Arena', 'Neon Racer', 'Orbit Hopper', 'Pixel Farms', 'Quest Cards', 'Rift Warriors', 'Sky Kingdoms', 'Temple Dash', 'Ultravoid', 'Voxel Tactics', 'Wander Worlds', 'Zen Sudoku', 'Zone Zero'],
+  'Social': ['Chatterbox', 'Circle', 'Datemuse', 'Echofeed', 'Friendline', 'Gossipwall', 'Hangout Hub', 'Instalens', 'Journaly', 'Kinfolk', 'Linkup', 'Meetwave'],
+  'Productivity': ['Taskwise', 'Notely Pro', 'Calendia', 'FocusFlow', 'Documark', 'Sheetcraft', 'Scanly', 'Signeasy', 'Vaultkey', 'Zipboard', 'Cloudsync', 'Printpal', 'Remindly', 'Templateo', 'Workstream'],
+  'Entertainment': ['Streamix', 'Tunecast', 'Vidly', 'Podcastle', 'Radiofy', 'Karaoke Night', 'Comedyclip', 'Moviemate', 'Serially', 'Watchlist Pro', 'Animezone', 'Mangaflow', 'Lyriclab', 'Concertgo', 'Trailerveil'],
+  'Lifestyle': ['Foodee', 'Outfitly', 'Homeplan', 'Gardenia', 'Petpal', 'Travelbug', 'Citywalk', 'Reciper', 'Shopsmart', 'Fitlife', 'Sleepeasy', 'Budgetbuddy'],
+  'Tools': ['Flashlight+', 'Compass Pro', 'Level Tool', 'Unit Convert', 'QR Master', 'WiFi Analyzer', 'Speedtest Go', 'Screen Recorder', 'File Manager+', 'Battery Doctor', 'Auto Cleaner', 'Widget Lab'],
+  'Health & Fitness': ['Stepify', 'Yoga Flow', 'Hydro Coach', 'Meditune', 'Runkeeper Plus', 'Cycle Map', 'Sleep Cycle', 'Calorie Count', 'Stretchly', 'Heart Rate'],
+  'Education': ['Lingoleap', 'Mathmagee', 'Science Lab', 'History Hub', 'Brainzy', 'Flashlearn', 'Coding Cadet', 'Art Master', 'Music Theory', 'Quizwhiz'],
+};
+const PS_DESC = {
+  'Games': 'Jump into {n} — smooth controls, gorgeous visuals and fresh events every season. Team up with friends, climb the leaderboards and unlock rewards.',
+  'Social': '{n} brings people closer. Share moments, join communities and chat with the people who matter — with privacy controls that put you first.',
+  'Productivity': '{n} helps you get more done. Sync across devices, collaborate in real time and keep your projects moving wherever you are.',
+  'Entertainment': '{n} is your home for endless entertainment. Stream, listen and discover new favorites with personalized picks updated daily.',
+  'Lifestyle': '{n} makes everyday life easier — smarter planning, helpful reminders and tools designed around the way you live.',
+  'Tools': '{n} packs powerful utilities into a clean, simple interface. Fast, reliable and free — exactly what your phone needs.',
+  'Health & Fitness': '{n} supports your wellness goals with guided plans, progress tracking and gentle nudges that keep you moving.',
+  'Education': '{n} turns learning into play. Bite-sized lessons, adaptive challenges and streaks that keep you coming back.',
+};
+function strHash(str) { let h = 0; for (const ch of str) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
+function psApps() {
+  if (psApps._cache) return psApps._cache;
+  const list = [];
+  Object.entries(PS_CATS).forEach(([cat, names]) => names.forEach(n => {
+    const h = strHash(n);
+    list.push({
+      name: n, cat, h,
+      grad: PS_GRADS[h % PS_GRADS.length],
+      dev: PS_DEVS[h % PS_DEVS.length],
+      rating: (3.8 + ((h >>> 3) % 12) / 10).toFixed(1),
+      dl: (5 + h % 900) + 'M+',
+      size: (14 + h % 70) + ' MB',
+      id: 'x' + n.toLowerCase().replace(/[^a-z0-9]/g, ''),
+    });
+  }));
+  psApps._cache = list;
+  return list;
+}
+function registerExtApp(e) {
+  if (appById(e.id)) return;
+  const a = { id: e.id, name: e.name, grad: e.grad, light: false, icon: `<span style="font-weight:800;font-size:25px">${e.name[0]}</span>` };
+  APPS.push(a);
+  a.build = (fr) => {
+    fr.append(appBar(e.name));
+    const sc = el('div', 'app-scroll'); sc.style.paddingBottom = '90px';
+    const hero = el('div', 'rp');
+    hero.style.cssText = `margin:8px 16px 16px;border-radius:30px;padding:28px 24px;color:#fff;background:${e.grad}`;
+    hero.innerHTML = `<div style="font-size:24px;font-weight:800">${e.name}</div>
+      <div style="opacity:.85;font-size:12.5px;margin-top:4px">${e.cat} · v${1 + e.h % 8}.${e.h % 10}.0 · ${e.name[0] === e.name[0].toUpperCase() ? 'Free' : 'Free'}</div>
+      <div style="font-size:13px;line-height:1.65;margin-top:14px;opacity:.92">${(PS_DESC[e.cat] || 'Enjoy {n} — polished, fast and free.').replace('{n}', e.name)}</div>`;
+    sc.appendChild(hero);
+    const mk = (ic, t, sub) => sc.appendChild(card(item(ic, t, sub, chevEnd(), () => toast(t))));
+    mk(null, 'Continue where you left off', 'Your recent items sync automatically');
+    sc.appendChild(el('div', 'oui-head', 'More'));
+    mk(null, 'Favorites', 'Nothing here yet — star things to see them here');
+    mk(null, 'Recent activity', 'Last 7 days');
+    mk(I.gear, 'Settings', 'Notifications, sync and storage');
+    fr.appendChild(sc);
+  };
+}
+appById('play').build = (f) => {
+  const apps = psApps();
+  const isInstalled = a => state.installed.some(e => e.id === a.id);
+  f.append(appBar('Play Store', null, '<div class="avatar" style="width:34px;height:34px;font-size:14px">G</div>'));
+  const seg = el('div', 'seg'); seg.style.margin = '4px 12px 10px';
+  let tab = 'For you';
+  ['For you', 'Top charts', 'Categories'].forEach(t => {
+    const b = el('button', t === tab ? 'on' : ''); b.textContent = t;
+    b.onclick = () => { click(); tab = t; seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.textContent === tab)); render(); };
+    seg.appendChild(b);
+  });
+  const sr = el('div');
+  sr.style.cssText = 'margin:0 14px 12px;display:flex;gap:10px;align-items:center;background:var(--card);border-radius:24px;padding:12px 18px';
+  sr.innerHTML = I.search.replace('<svg', '<svg width="16" height="16" fill="var(--text2)"');
+  const inp = el('input');
+  inp.placeholder = 'Search apps and games';
+  inp.style.cssText = 'flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13.5px;font-family:inherit';
+  inp.oninput = () => render();
+  sr.appendChild(inp);
+  const sc = el('div', 'app-scroll'); sc.style.cssText = 'flex:1;padding-bottom:90px';
+  f.append(seg, sr, sc);
+  const letterIcon = (a, size) => {
+    const ic = el('div', 'aicon rp');
+    ic.style.cssText = `background:${a.grad};color:#fff${size ? ';width:' + size + 'px;height:' + size + 'px;border-radius:' + Math.round(size * .4) + 'px' : ''}`;
+    ic.innerHTML = `<span style="font-weight:800;font-size:${size ? Math.round(size * .42) : 25}px">${a.name[0]}</span>`;
+    return ic;
+  };
+  const psCard = a => {
+    const c = el('div', 'ps-card rp');
+    c.appendChild(letterIcon(a, 60));
+    c.appendChild(el('div', 'psn', a.name));
+    c.appendChild(el('div', 'psr', a.rating + ' \u2605'));
+    if (isInstalled(a)) c.appendChild(el('div', 'psr', 'Installed'));
+    c.onclick = () => { click(); openDetail(a); };
+    return c;
+  };
+  const psRow = a => {
+    const it = el('div', 'oui-item rp');
+    it.style.cssText = 'gap:14px';
+    const end = isInstalled(a) ? '<span class="oi-end installed-badge">Installed</span>' : `<span class="oi-end" style="color:var(--blue);font-weight:700;font-size:13px">Install</span>`;
+    it.innerHTML = `<div style="width:46px;height:46px;border-radius:16px;flex:none;background:${a.grad};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px">${a.name[0]}</div>
+      <div class="oi-main"><div class="oi-t">${a.name}</div><div class="oi-s">${a.cat} · ${a.rating} \u2605 · ${a.dl}</div></div>${end}`;
+    it.onclick = () => { click(); openDetail(a); };
+    return it;
+  };
+  const row = (title, sub, list) => {
+    sc.appendChild(el('div', 'ps-row-title', `<b>${title}</b><span>${sub || ''}</span>`));
+    const h = el('div', 'ps-scroll');
+    list.forEach(a => h.appendChild(psCard(a)));
+    sc.appendChild(h);
+  };
+  const openCat = cat => {
+    const d = el('div', 'ps-detail');
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start;padding:0 14px';
+    const back = el('div', 'iconbtn rp', I.back);
+    back.style.cssText = 'margin:60px 14px 0 4px';
+    back.onclick = () => { click(); d.remove(); };
+    const h = el('div', 'app-bar'); h.innerHTML = `<h1>${cat}</h1>`;
+    bar.append(back, h);
+    const body = el('div', 'app-scroll'); body.style.cssText = 'flex:1;padding:8px 0 90px';
+    const c = el('div', 'oui-card');
+    apps.filter(a => a.cat === cat).forEach((a, i) => { if (i) c.appendChild(sep()); c.appendChild(psRow(a)); });
+    body.appendChild(c);
+    d.append(bar, body);
+    f.appendChild(d);
+  };
+  const installApp = a => {
+    if (!isInstalled(a)) {
+      const e = { id: a.id, name: a.name, grad: a.grad, cat: a.cat, h: a.h };
+      state.installed.push(e); save();
+      registerExtApp(e);
+      buildDrawer();
+    }
+  };
+  const openDetail = a => {
+    const d = el('div', 'ps-detail');
+    const bar = el('div'); bar.style.cssText = 'display:flex;align-items:flex-start;padding:0 14px';
+    const back = el('div', 'iconbtn rp', I.back);
+    back.style.cssText = 'margin:60px 14px 0 4px';
+    back.onclick = () => { click(); d.remove(); };
+    const h = el('div', 'app-bar'); h.innerHTML = `<h1>${a.name}</h1>`;
+    bar.append(back, h);
+    const body = el('div', 'app-scroll'); body.style.cssText = 'flex:1;padding:0 0 100px';
+    const hc = el('div', 'ps-head-card');
+    const ic = letterIcon(a, 74);
+    const tx = el('div');
+    tx.innerHTML = `<div style="font-weight:800;font-size:18px">${a.name}</div><div class="psd">${a.dev}</div><div class="psd">${a.cat}</div>`;
+    hc.append(ic, tx);
+    body.appendChild(hc);
+    body.insertAdjacentHTML('beforeend', `<div class="ps-meta"><div><b>${a.rating} \u2605</b>${(a.h % 40) + 8}K reviews</div><div><b>${a.dl}</b>Downloads</div><div><b>${a.size}</b>Size</div><div><b>${3 + a.h % 13}+</b>Rated for</div></div>`);
+    const btn = el('button', 'ps-install rp');
+    btn.style.cssText += ';width:calc(100% - 60px);border:none;font-family:inherit;cursor:pointer';
+    if (isInstalled(a)) { btn.classList.add('done'); btn.innerHTML = '<span class="installed-badge">Open</span>'; }
+    else btn.innerHTML = '<div class="fillp"></div><span>Install</span>';
+    btn.onclick = () => {
+      if (isInstalled(a)) { d.remove(); openApp(a.id); return; }
+      const fill = btn.querySelector('.fillp');
+      btn.disabled = true;
+      let p = 0;
+      const iv = setInterval(() => {
+        p += 6 + Math.random() * 9;
+        fill.style.width = Math.min(p, 100) + '%';
+        btn.querySelector('span').textContent = 'Installing\u2026 ' + Math.min(99, Math.round(p)) + '%';
+        if (p >= 100) {
+          clearInterval(iv);
+          installApp(a);
+          btn.classList.add('done'); btn.disabled = false;
+          btn.innerHTML = '<span class="installed-badge">Open</span>';
+          toast(a.name + ' installed');
+        }
+      }, 130);
+    };
+    body.appendChild(btn);
+    const shots = el('div', 'ps-shots');
+    for (let i = 0; i < 3; i++) {
+      const sh = el('div', 'ps-shot');
+      sh.style.background = a.grad;
+      sh.innerHTML = `
+        <div style="position:absolute;top:18px;left:16px;right:16px;height:14px;border-radius:8px;background:rgba(255,255,255,${.38 - i * .06})"></div>
+        <div style="position:absolute;top:${44 + i * 8}px;left:16px;width:${64 - i * 10}%;height:12px;border-radius:6px;background:rgba(255,255,255,.28)"></div>
+        <div style="position:absolute;top:${74 + i * 8}px;left:16px;width:${40 + i * 8}%;height:12px;border-radius:6px;background:rgba(255,255,255,.2)"></div>
+        <div style="position:absolute;bottom:20px;left:16px;right:16px;height:44px;border-radius:14px;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px">${a.name}</div>`;
+      shots.appendChild(sh);
+    }
+    body.appendChild(shots);
+    body.insertAdjacentHTML('beforeend', `<div class="oui-head" style="padding:6px 30px 0">About this app</div>
+      <div class="ps-desc">${PS_DESC[a.cat].replace('{n}', a.name)}</div>
+      <div class="oui-head" style="padding:6px 30px 0">Ratings and reviews</div>
+      <div class="ps-desc"><b style="color:var(--text);font-size:16px">${a.rating} \u2605\u2605\u2605\u2605\u2606</b><br>${(a.h % 30) + 12}K reviews · ${(a.h % 40) + 8}K this month</div>`);
+    d.append(bar, body);
+    f.appendChild(d);
+  };
+  const renderForYou = () => {
+    const heroApp = apps[7];
+    const hero = el('div', 'ps-hero rp');
+    hero.style.background = heroApp.grad;
+    hero.innerHTML = `<div class="ph-k">EDITOR'S CHOICE</div><div class="ph-t">${heroApp.name}</div><div class="ph-s">${heroApp.cat} · ${heroApp.rating} \u2605 · ${heroApp.dl} downloads</div>`;
+    hero.onclick = () => { click(); openDetail(heroApp); };
+    sc.appendChild(hero);
+    row('Recommended for you', 'Based on your activity', apps.slice(20, 32));
+    row('Popular this week', '', apps.slice(40, 52));
+    row('New & updated', 'Fresh this month', apps.slice(60, 72));
+    ['Games', 'Social', 'Productivity'].forEach(cat => row(cat, 'See all', apps.filter(a => a.cat === cat).slice(0, 10)));
+  };
+  const renderTop = () => {
+    sc.appendChild(el('div', 'oui-head', 'Top free apps'));
+    const c = el('div', 'oui-card');
+    const top = apps.slice().sort((x, y) => y.rating - x.rating || y.h % 100 - x.h % 100).slice(0, 25);
+    top.forEach((a, i) => {
+      if (i) c.appendChild(sep());
+      const it = el('div', 'oui-item rp');
+      it.style.cssText = 'gap:12px';
+      const end = isInstalled(a) ? '<span class="oi-end installed-badge">Installed</span>' : `<span class="oi-end" style="font-size:12.5px;color:var(--text2)">${a.rating} \u2605</span>`;
+      it.innerHTML = `<span class="rank">${i + 1}</span><div style="width:44px;height:44px;border-radius:15px;flex:none;background:${a.grad};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">${a.name[0]}</div>
+        <div class="oi-main"><div class="oi-t">${a.name}</div><div class="oi-s">${a.cat} · ${a.dl}</div></div>${end}`;
+      it.onclick = () => { click(); openDetail(a); };
+      c.appendChild(it);
+    });
+    sc.appendChild(c);
+  };
+  const renderCats = () => {
+    sc.appendChild(el('div', 'oui-head', 'Browse categories'));
+    const grid = el('div', 'ps-cat-grid');
+    Object.entries(PS_CATS).forEach(([cat, names]) => {
+      const d = el('div', 'ps-cat rp');
+      d.style.background = PS_GRADS[strHash(cat) % PS_GRADS.length];
+      d.innerHTML = `<div>${cat}<span style="display:block;font-weight:500;font-size:11.5px;opacity:.85;margin-top:2px">${names.length} apps</span></div>`;
+      d.onclick = () => { click(); openCat(cat); };
+      grid.appendChild(d);
+    });
+    sc.appendChild(grid);
+  };
+  const render = () => {
+    sc.innerHTML = '';
+    const q = inp.value.trim().toLowerCase();
+    if (q) {
+      sc.appendChild(el('div', 'oui-head', 'Results for "' + inp.value.trim() + '"'));
+      const matches = apps.filter(a => a.name.toLowerCase().includes(q));
+      if (!matches.length) sc.insertAdjacentHTML('beforeend', '<div style="text-align:center;color:var(--text2);font-size:13px;padding:26px 0">No apps found</div>');
+      else {
+        const c = el('div', 'oui-card');
+        matches.slice(0, 30).forEach((a, i) => { if (i) c.appendChild(sep()); c.appendChild(psRow(a)); });
+        sc.appendChild(c);
+      }
+      return;
+    }
+    if (tab === 'For you') renderForYou();
+    else if (tab === 'Top charts') renderTop();
+    else renderCats();
+  };
+  render();
+};
+
+appById('health').build = (f) => {
+  f.append(appBar('Health', 'Redesigned in One UI 9'));
+  const sc = el('div', 'app-scroll'); sc.style.padding = '10px 16px 90px';
+  sc.innerHTML = `
+    <div class="oui-card" style="padding:26px;display:flex;align-items:center;gap:22px">
+      <svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="56" fill="none" stroke="var(--chip)" stroke-width="11"/><circle cx="65" cy="65" r="56" fill="none" stroke="#e11d48" stroke-width="11" stroke-linecap="round" stroke-dasharray="352" stroke-dashoffset="352" transform="rotate(-90 65 65)" style="animation:ringGrow 1.6s var(--ease-spring) forwards" pathLength="352"/><text x="65" y="60" text-anchor="middle" fill="var(--text)" font-size="24" font-weight="700">7,432</text><text x="65" y="80" text-anchor="middle" fill="var(--text2)" font-size="11">steps</text></svg>
+      <div style="flex:1"><div style="font-weight:700;font-size:16px">Daily activity</div><div style="font-size:12.5px;color:var(--text2);margin-top:6px;line-height:1.6">74% of your 10,000 step goal<br>2.1 mi · 318 kcal · 46 min</div></div>
+    </div>
+    <div class="oui-head">Today</div>
+    <div class="oui-card">
+      <div class="oui-item"><span class="oi-ic" style="color:#0aa06e">${I.heart}</span><div class="oi-main"><div class="oi-t">Heart rate</div><div class="oi-s">68 bpm · resting</div></div><span class="oi-end">Normal</span></div>
+      <div class="oui-sep"></div>
+      <div class="oui-item"><span class="oi-ic" style="color:#1b6ef3">${I.clock}</span><div class="oi-main"><div class="oi-t">Sleep</div><div class="oi-s">7 h 24 min · last night</div></div><span class="oi-end">Good</span></div>
+      <div class="oui-sep"></div>
+      <div class="oui-item"><span class="oi-ic" style="color:#f5a623">${I.down}</span><div class="oi-main"><div class="oi-t">Water</div><div class="oi-s">5 of 8 cups</div></div><span class="oi-end">63%</span></div>
+    </div>`;
+  const st = document.createElement('style');
+  st.textContent = '@keyframes ringGrow{to{stroke-dashoffset:92}}';
+  sc.appendChild(st);
+  f.appendChild(sc);
+};
+
+/* ---------- DeX ---------- */
+const dexWin = { z: 10, wins: [] };
+function enterDex() {
+  state.dex = true;
+  const d = $('#dex');
+  d.classList.add('on');
+  const t = $('#dex-exit-toast'); t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 3200);
+  buildDexUI();
+  if (dexWin.wins.length === 0) setTimeout(() => createDexWindow('settings'), 700);
+  renderDexNotice();
+}
+function exitDex() {
+  state.dex = false;
+  $('#dex').classList.remove('on');
+  $('#dex-start').classList.remove('on');
+  dexWin.wins.forEach(w => w.el.remove());
+  dexWin.wins = [];
+  toast('Back to phone — One UI 9');
+}
+function buildDexUI() {
+  // top bar
+  const tb = $('#dex-top-btns');
+  tb.innerHTML = `<span style="font-size:11.5px">${I.wifi.replace('<svg', '<svg width="13" height="13" style="display:inline-block;vertical-align:-2px"')} Galaxy Home</span>
+    <span style="font-size:11.5px">${I.battery.replace('<svg', '<svg width="15" height="15" style="display:inline-block;vertical-align:-2px"')} 96%</span>
+    <button class="iconbtn rp" id="dex-notice-btn">${I.msg}</button>`;
+  tb.querySelector('#dex-notice-btn').onclick = () => $('#dex-notice').classList.toggle('on');
+  // taskbar
+  $('#dex-apps-btn').innerHTML = I.gear.replace('<svg', '<svg width="22" height="22"');
+  $('#dex-apps-btn').onclick = () => { click(); $('#dex-start').classList.toggle('on'); buildDexStart(); };
+  const pin = $('#dex-pin');
+  pin.innerHTML = '';
+  ['internet', 'messages', 'gallery', 'phone', 'clock', 'notes'].forEach(id => {
+    const a = appById(id);
+    const b = el('button', 'tbn rp');
+    b.appendChild(appIcon(a));
+    b.insertAdjacentHTML('beforeend', '<span class="rundot"></span>');
+    b.dataset.app = id;
+    b.title = a.name;
+    b.onclick = () => { click(); focusDexApp(id); };
+    pin.appendChild(b);
+  });
+  $('#dex-right').innerHTML = `<button class="iconbtn rp" id="dex-exit">${I.x}</button><span class="tb-clock" style="font-size:12.5px"></span>`;
+  $('#dex-exit').onclick = exitDex;
+  $('#dex-exit').title = 'Exit DeX';
+  // start menu
+  const sg = $('#ds-grid');
+  sg.innerHTML = '';
+  APPS.forEach(a => {
+    const b = el('button', 'ds-app rp');
+    b.appendChild(appIcon(a));
+    b.insertAdjacentHTML('beforeend', `<span>${a.name}</span>`);
+    b.onclick = () => { click(); $('#dex-start').classList.remove('on'); focusDexApp(a.id); };
+    sg.appendChild(b);
+  });
+  tickClock();
+}
+function buildDexStart() {
+  const inp = $('#ds-search');
+  inp.onclick = () => toast('Search is demo-only in DeX');
+}
+function focusDexApp(id) {
+  const open = dexWin.wins.find(w => w.id === id);
+  if (open) { open.el.classList.remove('min'); open.el.style.zIndex = ++dexWin.z; return; }
+  createDexWindow(id);
+}
+function createDexWindow(id) {
+  const a = appById(id);
+  const w = el('div', 'dexwin');
+  const n = dexWin.wins.length;
+  w.style.cssText = `left:${60 + n * 36}px;top:${40 + n * 30}px;width:${Math.min(720, window.innerWidth - 120)}px;height:${Math.min(560, window.innerHeight - 200)}px;z-index:${++dexWin.z}`;
+  const head = el('div', 'dw-head');
+  head.appendChild(appIcon(a));
+  head.insertAdjacentHTML('beforeend', `<span class="dw-t">${a.name}</span><div class="dw-ctl">
+    <button class="mn">${I.down}</button><button class="mx">${I.dex}</button><button class="x rp">${I.x}</button></div>`);
+  const body = el('div', 'dw-body');
+  const frame = el('div', 'app-frame');
+  frame.style.cssText = 'position:absolute;inset:0';
+  a.build(frame, { dex: true });
+  body.appendChild(frame);
+  const rs = el('div', 'dw-rs');
+  w.append(head, body, rs);
+  $('#dex-windows').appendChild(w);
+  // controls
+  w.querySelector('.mn').onclick = () => { w.classList.add('min'); };
+  w.querySelector('.mx').onclick = () => w.classList.toggle('max');
+  w.querySelector('.x').onclick = () => { click(); w.remove(); dexWin.wins = dexWin.wins.filter(x => x !== rec); };
+  w.addEventListener('pointerdown', () => w.style.zIndex = ++dexWin.z, true);
+  // drag
+  head.addEventListener('pointerdown', e => {
+    if (e.target.closest('.dw-ctl')) return;
+    const r = w.getBoundingClientRect();
+    const ox = e.clientX - r.left, oy = e.clientY - r.top;
+    w.classList.remove('max');
+    const move = ev => { w.style.left = (ev.clientX - ox) + 'px'; w.style.top = (ev.clientY - oy) + 'px'; };
+    head.setPointerCapture(e.pointerId);
+    head.onpointermove = move;
+    head.onpointerup = () => { head.onpointermove = null; };
+  });
+  // resize
+  rs.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    const r = w.getBoundingClientRect();
+    const move = ev => { w.style.width = (ev.clientX - r.left) + 'px'; w.style.height = (ev.clientY - r.top) + 'px'; };
+    rs.setPointerCapture(e.pointerId);
+    rs.onpointermove = move;
+    rs.onpointerup = () => { rs.onpointermove = null; };
+  });
+  const rec = { id, el: w };
+  dexWin.wins.push(rec);
+  // taskbar running dots
+  const tb = $(`#dex-pin .tbn[data-app="${id}"]`);
+  if (tb) tb.classList.add('run');
+  const obs = new MutationObserver(() => {
+    if (!document.body.contains(w)) { if (tb) tb.classList.remove('run'); obs.disconnect(); }
+  });
+  obs.observe($('#dex-windows'), { childList: true });
+  pop(820);
+}
+function renderDexNotice() {
+  const n = $('#dex-notice');
+  n.innerHTML = '';
+  n.insertAdjacentHTML('beforeend', '<div style="padding:8px 12px;font-size:11px;font-weight:700;color:rgba(255,255,255,.6);letter-spacing:1px">NOTIFICATIONS</div>');
+  state.notifs.slice(0, 5).forEach(x => {
+    const d = el('div', 'sh-notif rp');
+    d.style.cssText = 'background:rgba(255,255,255,.08);margin:0 6px 6px;color:#fff';
+    d.innerHTML = `<div class="ni" style="background:${x.color}">${x.icon.replace('<svg', '<svg width="15" height="15" fill="#fff"')}</div>
+      <div style="min-width:0;flex:1"><div class="nt" style="color:#fff;font-size:13px">${x.title}</div><div class="nm" style="color:rgba(255,255,255,.6);font-size:12px">${x.body}</div></div>`;
+    d.onclick = () => { n.classList.remove('on'); };
+    n.appendChild(d);
+  });
+  n.insertAdjacentHTML('beforeend', '<div style="padding:10px 12px;font-size:11.5px;color:rgba(255,255,255,.5);text-align:center">Click outside to close</div>');
+  n.onclick = e => { if (e.target === n) n.classList.remove('on'); };
+}
+
+/* ---------- device side buttons ---------- */
+function setupSideButtons() {
+  const phone = $('#phone');
+  const pw = $('#phone-wrap').getBoundingClientRect();
+  // power (right side upper) + volume (right side lower)
+  let volMode = false;
+  document.addEventListener('pointerdown', e => {
+    const r = $('#phone').getBoundingClientRect();
+    const inRight = e.clientX > r.right - 8 && e.clientX < r.right + 14;
+    const y = (e.clientY - r.top) / r.height;
+    if (!inRight) return;
+    if (y > .24 && y < .35) { // power
+      e.preventDefault();
+      const lock = $('#lock').classList.contains('on') || !state.booted || $('#aod').classList.contains('on');
+      if (lock) { if ($('#aod').classList.contains('on')) { $('#aod').classList.remove('on'); } showLock(); }
+      else showPowerMenu();
+    } else if (y > .38 && y < .52) { volMode = true; volumeHud(.1); }
+  }, { passive: false });
+  document.addEventListener('pointerup', () => { volMode = false; });
+}
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if ($('#powermenu').classList.contains('on')) { $('#powermenu').classList.remove('on'); return; }
+    if ($('#dex').classList.contains('on')) { if ($('#dex-start').classList.contains('on')) $('#dex-start').classList.remove('on'); else exitDex(); return; }
+    if ($('#shade').classList.contains('open')) { closeShade(); return; }
+    if ($('#drawer').classList.contains('on')) { closeDrawer(); return; }
+    if ($('#recents').classList.contains('on')) { closeRecents(); return; }
+    if ($('#app-layer').classList.contains('on')) { closeApp(); return; }
+    if ($('#lock').classList.contains('on')) { return; }
+    openShade();
+  }
+});
+
+/* ---------- init ---------- */
+function init() {
+  applyTheme(); applyWallpaper(); applyNavMode();
+  seedNotifs(); state.installed.forEach(e => registerExtApp(e)); buildHome(); buildDrawer(); setupShadeGestures(); setupNav(); setupSideButtons();
+  renderShade(); renderStatusIcons(); tickClock();
+  // media art canvas
+  requestAnimationFrame(() => {
+    const c = document.getElementById('mq-art-c');
+    if (c) { const x = c.getContext('2d'); const g = x.createLinearGradient(0, 0, 52, 52); g.addColorStop(0, '#ff9a62'); g.addColorStop(1, '#d5458b'); x.fillStyle = g; x.fillRect(0, 0, 52, 52); }
+  });
+  // ambient: occasional notification
+  setInterval(() => {
+    if (!state.booted || state.dex) return;
+    if (Math.random() < .25) {
+      const pool = NOTIF_POOL.filter(n => !state.notifs.some(x => x.title === n.title));
+      if (pool.length) pushNotif({ ...pool[Math.floor(Math.random() * pool.length)] });
+    }
+  }, 30000);
+  boot();
+}
+init();
+</script>
+</body>
+</html>
